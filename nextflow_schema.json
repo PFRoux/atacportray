@@ -261,6 +261,12 @@
                     "description": "Run TOBIAS footprinting (ATACorrect -> ScoreBigwig -> BINDetect).",
                     "fa_icon": "fas fa-shoe-prints"
                 },
+                "run_nucleoatac": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run NucleoATAC nucleosome positioning (occ -> vprocess -> nuc -> merge -> nfr) over MACS3 peaks. Uses a Python-3.11 community fork container.",
+                    "fa_icon": "fas fa-dna"
+                },
                 "tobias_motifs": {
                     "type": "string",
                     "format": "file-path",

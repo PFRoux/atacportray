@@ -7,9 +7,10 @@ keywords:
   - atac-seq
 tools:
   - rose:
-      description: "Rank Ordering of Super-Enhancers"
-      homepage: "http://younglab.wi.mit.edu/super_enhancer_code.html"
-      documentation: "https://bitbucket.org/young_computation/rose"
+      description: "Rank Ordering of Super-Enhancers (St. Jude python3 fork)"
+      homepage: "https://github.com/stjude/ROSE"
+      documentation: "https://github.com/stjude/ROSE"
+      tool_dev_url: "https://github.com/stjude/ROSE"
       doi: "10.1016/j.cell.2013.03.035"
       licence: ["MIT"]
       identifier: ""
@@ -43,42 +44,42 @@ output:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "*_SuperEnhancers.table.txt":
+      - "*_SuperStitched.table.txt":
           type: file
-          description: Ranked super-enhancer table
-          pattern: "*_SuperEnhancers.table.txt"
+          description: Ranked super-enhancer table (stitched regions above the cutoff)
+          pattern: "*_SuperStitched.table.txt"
   all_enhancers:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "*_AllEnhancers.table.txt":
+      - "*_AllStitched.table.txt":
           type: file
-          description: All stitched enhancers with signal ranking
-          pattern: "*_AllEnhancers.table.txt"
+          description: All stitched enhancers with signal ranking and super status
+          pattern: "*_AllStitched.table.txt"
   enhancers_bed:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "*_Enhancers_withSuper.bed":
+      - "*_Stitched_withSuper.bed":
           type: file
-          description: BED of enhancers flagged for super-enhancer status
-          pattern: "*_Enhancers_withSuper.bed"
-  stitched:
+          description: BED of stitched enhancers flagged for super-enhancer status
+          pattern: "*_Stitched_withSuper.bed"
+  super_genes:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "*_SuperStitched.table.txt":
+      - "*_SuperStitched.table_withGENES.txt":
           type: file
-          description: Stitched regions table
-          pattern: "*_SuperStitched.table.txt"
+          description: Super-enhancer table with nearby genes assigned by ROSE_geneMapper
+          pattern: "*_SuperStitched.table_withGENES.txt"
   plot:
     - - meta:
           type: map
           description: Groovy Map containing sample information
-      - "*.pdf":
+      - "*_Plot_points.png":
           type: file
           description: Super-enhancer hockey-stick plot
-          pattern: "*.pdf"
+          pattern: "*_Plot_points.png"
   versions:
     - "versions.yml":
         type: file

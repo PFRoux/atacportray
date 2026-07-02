@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test Process NUCLEOATAC"
+    script "../main.nf"
+    process "NUCLEOATAC"
+
+    tag "modules"
+    tag "modules_local"
+    tag "nucleoatac"
+
+    test("nucleoatac - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [ [ id:'test' ], file("test.bam"), file("test.bam.bai"), file("test.narrowPeak") ]
+                input[1] = [ [ id:'genome' ], file("genome.fasta") ]
+                input[2] = [ [ id:'genome' ], file("genome.fasta.fai") ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.nucpos },
+                { assert process.out.nfr }
+            )
+        }
+    }
+}

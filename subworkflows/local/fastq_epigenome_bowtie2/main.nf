@@ -11,6 +11,7 @@ include { SAMTOOLS_INDEX       } from '../../../modules/nf-core/samtools/index/m
 include { DEEPTOOLS_BAMCOVERAGE} from '../../../modules/nf-core/deeptools/bamcoverage/main'
 include { MACS3_CALLPEAK       } from '../../../modules/nf-core/macs3/callpeak/main'
 include { ROSE                 } from '../../../modules/local/rose/main'
+include { NUCLEOATAC           } from '../../../modules/local/nucleoatac/main'
 include { CONSENSUS_PEAKS      } from '../../../modules/local/consensus_peaks/main'
 include { TOBIAS_ATACORRECT    } from '../../../modules/local/tobias/atacorrect/main'
 include { TOBIAS_SCOREBIGWIG   } from '../../../modules/local/tobias/scorebigwig/main'
@@ -31,6 +32,7 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     rose_stitch       // value:   e.g. 12500
     rose_tss          // value:   e.g. 2500
     run_tobias        // value:   boolean
+    run_nucleoatac    // value:   boolean
 
     main:
     ch_versions      = Channel.empty()
@@ -100,6 +102,23 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     }
 
     //
+    // Nucleosome positioning with NucleoATAC (occ -> vprocess -> nuc -> merge -> nfr)
+    // over the per-sample MACS3 peak regions, using the analysis-ready BAM.
+    //
+    ch_nucleosomes = Channel.empty()
+    if ( run_nucleoatac ) {
+        ch_nuc_in = ch_bam_bai.join( MACS3_CALLPEAK.out.peak )
+            .map { meta, bam, bai, peak -> [ meta, bam, bai, peak ] }
+        NUCLEOATAC (
+            ch_nuc_in,
+            ch_fasta,
+            ch_fai
+        )
+        ch_nucleosomes = NUCLEOATAC.out.nucpos
+        ch_versions = ch_versions.mix(NUCLEOATAC.out.versions)
+    }
+
+    //
     // Footprinting with TOBIAS (ATACorrect -> ScoreBigwig -> BINDetect, HOCOMOCO v11)
     //
     ch_bindetect = Channel.empty()
@@ -136,6 +155,7 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     bigwig         = DEEPTOOLS_BAMCOVERAGE.out.bigwig
     peaks          = MACS3_CALLPEAK.out.peak
     super_enhancers= ch_super_enhancers
+    nucleosomes    = ch_nucleosomes
     footprints     = ch_bindetect
     multiqc_files  = ch_multiqc_files
     versions       = ch_versions                   // channel: [ versions.yml ]

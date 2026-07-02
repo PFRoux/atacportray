@@ -1,0 +1,121 @@
+name: "nucleoatac"
+description: Call nucleosome positions and nucleosome-free regions from ATAC-seq using NucleoATAC
+keywords:
+  - nucleosome
+  - nucleoatac
+  - atac-seq
+  - nucleosome-free-region
+  - chromatin
+tools:
+  - nucleoatac:
+      description: "Python package for calling nucleosomes using ATAC-seq data (Python 3.11 community fork of GreenleafLab/NucleoATAC)."
+      homepage: "https://github.com/GreenleafLab/NucleoATAC"
+      documentation: "https://nucleoatac.readthedocs.io/"
+      tool_dev_url: "https://github.com/alecethell/NucleoATAC/tree/py311-modernization"
+      doi: "10.1101/gr.192294.115"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: "Groovy Map containing sample information e.g. `[ id:'sample1' ]`"
+    - bam:
+        type: file
+        description: Analysis-ready, coordinate-sorted BAM
+        pattern: "*.bam"
+    - bai:
+        type: file
+        description: BAM index
+        pattern: "*.bai"
+    - peaks:
+        type: file
+        description: Peak regions (BED) over which to call nucleosomes
+        pattern: "*.{bed,narrowPeak,broadPeak}"
+  - - meta2:
+        type: map
+        description: "Groovy Map for the reference e.g. `[ id:'genome' ]`"
+    - fasta:
+        type: file
+        description: Reference genome FASTA (used for Tn5 bias correction)
+        pattern: "*.{fa,fasta}"
+  - - meta3:
+        type: map
+        description: "Groovy Map for the reference e.g. `[ id:'genome' ]`"
+    - fai:
+        type: file
+        description: FASTA index (.fai); regenerated if absent
+        pattern: "*.fai"
+output:
+  nucpos:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.nucpos.bed.gz":
+          type: file
+          description: Called nucleosome dyad positions
+          pattern: "*.nucpos.bed.gz"
+  nucmap:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.nucmap_combined.bed.gz":
+          type: file
+          description: Combined nucleosome map
+          pattern: "*.nucmap_combined.bed.gz"
+  nfr:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.nfrpos.bed.gz":
+          type: file
+          description: Nucleosome-free regions
+          pattern: "*.nfrpos.bed.gz"
+  occpeaks:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.occpeaks.bed.gz":
+          type: file
+          description: Occupancy peak calls
+          pattern: "*.occpeaks.bed.gz"
+  occ:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.occ.bedgraph.gz":
+          type: file
+          description: Nucleosome occupancy track
+          pattern: "*.occ.bedgraph.gz"
+  signal:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.nucleoatac_signal.bedgraph.gz":
+          type: file
+          description: NucleoATAC signal track
+          pattern: "*.nucleoatac_signal.bedgraph.gz"
+  signal_smooth:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.nucleoatac_signal.smooth.bedgraph.gz":
+          type: file
+          description: Smoothed NucleoATAC signal track
+          pattern: "*.nucleoatac_signal.smooth.bedgraph.gz"
+  results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*":
+          type: file
+          description: All NucleoATAC output files
+          pattern: "*"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

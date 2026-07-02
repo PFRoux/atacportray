@@ -155,7 +155,8 @@ workflow ATACPORTRAY {
             params.run_epigenome,        // run_rose gate (ROSE always on within epigenome)
             params.rose_stitch,
             params.rose_tss,
-            params.run_footprinting
+            params.run_footprinting,
+            params.run_nucleoatac
         )
         ch_versions      = ch_versions.mix(FASTQ_EPIGENOME_BOWTIE2.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(FASTQ_EPIGENOME_BOWTIE2.out.multiqc_files)

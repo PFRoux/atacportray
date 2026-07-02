@@ -4,8 +4,8 @@ process TELOMEREHUNTER {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'oras://community.wave.seqera.io/library/atacportray-telomerehunter:1.1.0' :
-        'community.wave.seqera.io/library/atacportray-telomerehunter:1.1.0' }"
+        'oras://ghcr.io/pfroux/atacportray-telomerehunter:1.1.0' :
+        'ghcr.io/pfroux/atacportray-telomerehunter:1.1.0' }"
 
     input:
     tuple val(meta), path(bam), path(bai)

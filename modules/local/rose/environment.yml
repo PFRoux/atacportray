@@ -1,12 +1,13 @@
 name: rose
-# ROSE is not available via conda/bioconda; it runs from a custom container
-# (see modules/local/rose/Dockerfile). This environment.yml documents the
-# runtime for reference / local execution only.
+# ROSE (St. Jude python3 fork, github.com/stjude/ROSE) is not on bioconda; it
+# runs from the official container image ghcr.io/stjude/abralab/rose (see the
+# `container` directive in main.nf). This file documents the runtime for
+# reference only — the `conda` profile cannot install ROSE itself.
 channels:
   - conda-forge
   - bioconda
 dependencies:
-  - conda-forge::python=2.7
-  - bioconda::samtools=1.9
-  - conda-forge::r-base=3.6
-  - bioconda::bamliquidator
+  - conda-forge::python>=3.8
+  - bioconda::samtools>=1.9
+  - conda-forge::r-base>=3.4
+  - bioconda::bedtools>=2

@@ -2,10 +2,11 @@ process ROSE {
     tag "$meta.id"
     label 'process_medium'
 
+    // St. Jude python3-compatible ROSE (github.com/stjude/ROSE). The official
+    // image bundles ROSE_main.py + the genome annotation tables, so no local
+    // build is required. Digest of v1.3.2: sha256:b46fadd8dfeaa0fe080a31aa216d4f34de9c68644dc053ae736cc612244e969b
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'oras://community.wave.seqera.io/library/atacportray-rose:1.0.0' :
-        'community.wave.seqera.io/library/atacportray-rose:1.0.0' }"
+    container "ghcr.io/stjude/abralab/rose:v1.3.2"
 
     input:
     tuple val(meta), path(peaks), path(bam), path(bai)
@@ -14,12 +15,12 @@ process ROSE {
     val   tss_exclusion
 
     output:
-    tuple val(meta), path("*_SuperEnhancers.table.txt")        , emit: super_enhancers
-    tuple val(meta), path("*_AllEnhancers.table.txt")          , emit: all_enhancers
-    tuple val(meta), path("*_Enhancers_withSuper.bed")         , emit: enhancers_bed , optional: true
-    tuple val(meta), path("*_SuperStitched.table.txt")         , emit: stitched      , optional: true
-    tuple val(meta), path("*.pdf")                             , emit: plot          , optional: true
-    path "versions.yml"                                         , emit: versions
+    tuple val(meta), path("*_SuperStitched.table.txt")           , emit: super_enhancers, optional: true
+    tuple val(meta), path("*_AllStitched.table.txt")             , emit: all_enhancers  , optional: true
+    tuple val(meta), path("*_Stitched_withSuper.bed")            , emit: enhancers_bed , optional: true
+    tuple val(meta), path("*_SuperStitched.table_withGENES.txt") , emit: super_genes   , optional: true
+    tuple val(meta), path("*_Plot_points.png")                   , emit: plot          , optional: true
+    path "versions.yml"                                          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -28,42 +29,64 @@ process ROSE {
     def args   = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    # Convert narrowPeak/BED to the GFF ROSE expects
-    rose_peaks_to_gff.py $peaks ${prefix}_peaks.gff
+    # ROSE consumes the constituent-enhancer peaks as a BED/GFF. MACS3 narrowPeak
+    # is BED6+4 with a unique peak name in column 4, which ROSE's internal
+    # bedToGFF() uses as the region ID — so staging it with a .bed suffix lets
+    # ROSE convert it internally (no external helper needed). ROSE derives the
+    # output prefix from this filename up to the first dot.
+    cp -L $peaks ${prefix}_peaks.bed
+
+    # The image ships the UCSC refseq annotation next to the ROSE install. ROSE's
+    # built-in genome table is resolved relative to \$PWD, so pass the shipped
+    # file explicitly with --custom instead of -g.
+    ROSE_HOME=\$(dirname \$(dirname \$(readlink -f \$(command -v ROSE_main.py))))
+    GENOME_LC=\$(echo "${genome_build}" | tr '[:upper:]' '[:lower:]')
+    ANNOT="\${ROSE_HOME}/annotation/\${GENOME_LC}_refseq.ucsc"
+    if [ ! -s "\$ANNOT" ]; then
+        echo "ERROR: ROSE annotation for build '${genome_build}' not found at \$ANNOT" >&2
+        echo "Available: \$(ls \${ROSE_HOME}/annotation/ 2>/dev/null | tr '\\n' ' ')" >&2
+        exit 1
+    fi
 
     ROSE_main.py \\
-        -g ${genome_build} \\
-        -i ${prefix}_peaks.gff \\
+        --custom "\$ANNOT" \\
+        -i ${prefix}_peaks.bed \\
         -r $bam \\
         -o . \\
         -s ${stitch} \\
         -t ${tss_exclusion} \\
         $args
 
-    # Normalize output names to the sample prefix
-    for f in *_SuperEnhancers.table.txt *_AllEnhancers.table.txt; do
-        [ -e "\$f" ] && mv "\$f" "${prefix}_\${f#*_}" 2>/dev/null || true
-    done
+    # ROSE's super-enhancer cutoff (ROSE_callSuper.R) fits a curve across the
+    # ranked stitched enhancers. When a sample yields too few stitched regions
+    # (e.g. very shallow data or a tiny reference), the fit cannot converge and
+    # the *_SuperStitched / *_AllStitched tables are not written — yet
+    # ROSE_main.py still exits 0. Surface that clearly instead of failing the
+    # whole run; the corresponding outputs are declared optional.
+    if [ ! -s ${prefix}_peaks_SuperStitched.table.txt ]; then
+        echo "WARNING: ROSE produced no super-enhancer table for '${prefix}'. This usually means too few stitched enhancers to fit a cutoff (low peak count). Downstream super-enhancer steps will be skipped for this sample." >&2
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        rose: 1.0.0
-        python: \$(python --version 2>&1 | sed 's/Python //')
+        rose: \$(echo "\${ROSE_VERSION:-1.3.2}")
+        python: \$(python3 --version 2>&1 | sed 's/Python //')
     END_VERSIONS
     """
 
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}_SuperEnhancers.table.txt
-    touch ${prefix}_AllEnhancers.table.txt
-    touch ${prefix}_Enhancers_withSuper.bed
-    touch ${prefix}_plot.pdf
+    touch ${prefix}_peaks_SuperStitched.table.txt
+    touch ${prefix}_peaks_AllStitched.table.txt
+    touch ${prefix}_peaks_Stitched_withSuper.bed
+    touch ${prefix}_peaks_SuperStitched.table_withGENES.txt
+    touch ${prefix}_peaks_Plot_points.png
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        rose: 1.0.0
-        bamliquidator: 1.0
+        rose: 1.3.2
+        python: 3.10.0
     END_VERSIONS
     """
 }

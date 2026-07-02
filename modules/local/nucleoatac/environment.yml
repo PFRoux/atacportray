@@ -1,0 +1,16 @@
+name: nucleoatac
+# NucleoATAC's PyPI/bioconda releases are Python 2.7-only. This pipeline runs
+# the Python-3.11 community fork (GreenleafLab PR #99) from a custom container
+# (see modules/local/nucleoatac/Dockerfile). This file documents the runtime
+# for reference only; there is no conda package for the py3 fork.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::python=3.11
+  - conda-forge::numpy>=1.26,<2.1
+  - conda-forge::scipy>=1.11
+  - conda-forge::pysam>=0.22
+  - conda-forge::matplotlib>=3.8
+  - conda-forge::cython>=3.0
+  - bioconda::samtools>=1.18

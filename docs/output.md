@@ -18,6 +18,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
   - [Consensus peaks](#consensus-peaks) - Per-condition reproducible peak sets
   - [deepTools](#deeptools) - Coverage bigWig tracks
   - [ROSE](#rose) - Super-enhancer identification
+  - [NucleoATAC](#nucleoatac) - Nucleosome positioning (optional, `--run_nucleoatac`)
   - [TOBIAS](#tobias) - TF footprinting (optional, `--run_footprinting`)
 - [Variant branch](#variant-branch) (`--run_variants`)
   - [BWA-MEM + GATK](#bwa-mem--gatk) - Alignment, MarkDuplicates, BQSR (analysis-ready BAM)
@@ -92,10 +93,34 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 <summary>Output files</summary>
 
 - `epigenome/rose/`
-  - `*_SuperEnhancers.table.txt`, `*_AllEnhancers.table.txt` - Ranked (super-)enhancers
+  - `*_SuperStitched.table.txt` - Ranked super-enhancers (stitched regions above the cutoff)
+  - `*_AllStitched.table.txt` - All stitched enhancers with signal ranking and super-enhancer status
+  - `*_Stitched_withSuper.bed` - BED of stitched enhancers flagged as super-enhancers
+  - `*_SuperStitched.table_withGENES.txt` - Super-enhancers with nearby genes assigned by ROSE_geneMapper
   - `*_Plot_points.png` - Hockey-stick ranking plot
 
 </details>
+
+#### NucleoATAC
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `epigenome/nucleoatac/<sample>/`
+  - `*.nucpos.bed.gz` - Called nucleosome dyad positions
+  - `*.nucmap_combined.bed.gz` - Combined nucleosome map
+  - `*.nfrpos.bed.gz` - Nucleosome-free regions
+  - `*.occpeaks.bed.gz` - Occupancy peak calls
+  - `*.occ.bedgraph.gz` - Nucleosome occupancy track
+  - `*.nucleoatac_signal.bedgraph.gz`, `*.nucleoatac_signal.smooth.bedgraph.gz` - NucleoATAC signal tracks
+
+</details>
+
+Produced only when `--run_nucleoatac` is set. NucleoATAC calls nucleosome
+positions and nucleosome-free regions within the per-sample MACS3 peak regions
+using the analysis-ready BAM and the reference FASTA (for Tn5-bias correction).
+Runs in a Python 3.11 container built from the community fork (see
+[containers.md](containers.md)).
 
 #### TOBIAS
 
