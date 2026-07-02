@@ -1,0 +1,290 @@
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+include { paramsSummaryMap       } from 'plugin/nf-schema'
+include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
+include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_atacportray_pipeline'
+
+//
+// MODULE: reference preparation
+//
+include { FASTP                         } from '../modules/nf-core/fastp/main'
+include { BOWTIE2_BUILD                 } from '../modules/nf-core/bowtie2/build/main'
+include { BWA_INDEX                     } from '../modules/nf-core/bwa/index/main'
+include { SAMTOOLS_FAIDX                } from '../modules/nf-core/samtools/faidx/main'
+include { GATK4_CREATESEQUENCEDICTIONARY} from '../modules/nf-core/gatk4/createsequencedictionary/main'
+include { GUNZIP                        } from '../modules/nf-core/gunzip/main'
+
+//
+// SUBWORKFLOW: analysis branches
+//
+include { FASTQ_EPIGENOME_BOWTIE2       } from '../subworkflows/local/fastq_epigenome_bowtie2/main'
+include { FASTQ_VARIANT_CALLING_ATAC    } from '../subworkflows/local/fastq_variant_calling_atac/main'
+include { BAM_CNV_QDNASEQ               } from '../subworkflows/local/bam_cnv_qdnaseq/main'
+include { BAM_TELOMERE_TELOMEREHUNTER   } from '../subworkflows/local/bam_telomere_telomerehunter/main'
+include { BAM_MITO_MGATK                } from '../subworkflows/local/bam_mito_mgatk/main'
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    RUN MAIN WORKFLOW
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+
+workflow ATACPORTRAY {
+
+    take:
+    ch_samplesheet // channel: samplesheet read in from --input
+    main:
+
+    ch_versions      = channel.empty()
+    ch_multiqc_files = channel.empty()
+
+    //
+    // Reference channels
+    //
+    ch_fasta_raw = channel.fromPath(params.fasta, checkIfExists: true)
+        .map { fa -> [ [id:'genome'], fa ] }
+        .collect()
+
+    // Decompress FASTA if gzipped
+    ch_fasta_branch = ch_fasta_raw.branch { meta, fa ->
+        gz: fa.name.endsWith('.gz')
+        plain: true
+    }
+    GUNZIP ( ch_fasta_branch.gz )
+    ch_fasta = ch_fasta_branch.plain.mix(GUNZIP.out.gunzip).first()
+
+    // FASTA index (.fai) + chrom sizes
+    if ( params.fasta_fai ) {
+        ch_fai = channel.fromPath(params.fasta_fai, checkIfExists: true)
+            .map { f -> [ [id:'genome'], f ] }.collect()
+    } else {
+        SAMTOOLS_FAIDX ( ch_fasta.map { m, f -> [ m, f, [] ] }, false )
+        ch_fai = SAMTOOLS_FAIDX.out.fai.collect()
+    }
+
+    // Bowtie2 index (epigenome)
+    if ( params.run_epigenome ) {
+        if ( params.bowtie2_index ) {
+            ch_bowtie2_index = channel.fromPath(params.bowtie2_index, checkIfExists: true)
+                .map { d -> [ [id:'genome'], d ] }.collect()
+        } else {
+            BOWTIE2_BUILD ( ch_fasta )
+            ch_bowtie2_index = BOWTIE2_BUILD.out.index.collect()
+        }
+    } else {
+        ch_bowtie2_index = channel.value([[:], []])
+    }
+
+    // BWA index + GATK dict (variants)
+    ch_dict = channel.value([[:], []])
+    if ( params.run_variants ) {
+        if ( params.bwa_index ) {
+            ch_bwa_index = channel.fromPath(params.bwa_index, checkIfExists: true)
+                .map { d -> [ [id:'genome'], d ] }.collect()
+        } else {
+            BWA_INDEX ( ch_fasta )
+            ch_bwa_index = BWA_INDEX.out.index.collect()
+        }
+        if ( params.dict ) {
+            ch_dict = channel.fromPath(params.dict, checkIfExists: true)
+                .map { f -> [ [id:'genome'], f ] }.collect()
+        } else {
+            GATK4_CREATESEQUENCEDICTIONARY ( ch_fasta )
+            ch_dict = GATK4_CREATESEQUENCEDICTIONARY.out.dict.collect()
+        }
+    } else {
+        ch_bwa_index = channel.value([[:], []])
+    }
+
+    // Blacklist / motifs / known-sites / cytoBand / VEP cache
+    ch_blacklist = params.blacklist ?
+        channel.fromPath(params.blacklist, checkIfExists: true).map { f -> [ [id:'blacklist'], f ] }.collect() :
+        channel.value([[:], []])
+    ch_motifs = params.tobias_motifs ?
+        channel.fromPath(params.tobias_motifs, checkIfExists: true).collect() :
+        channel.value([])
+    ch_known_sites = params.known_sites ?
+        channel.fromPath(params.known_sites, checkIfExists: true).map { f -> [ [id:'known'], f ] }.collect() :
+        channel.value([[:], []])
+    ch_known_sites_tbi = params.known_sites_tbi ?
+        channel.fromPath(params.known_sites_tbi, checkIfExists: true).map { f -> [ [id:'known'], f ] }.collect() :
+        channel.value([[:], []])
+    ch_cytoband = params.cytoband ?
+        channel.fromPath(params.cytoband, checkIfExists: true).collect() :
+        channel.value([])
+    ch_vep_cache = params.vep_cache ?
+        channel.fromPath(params.vep_cache, checkIfExists: true).map { c -> [ [id:'vep'], c ] }.collect() :
+        channel.value([[:], []])
+
+    //
+    // Read trimming (fastp)
+    //
+    if ( params.skip_trimming ) {
+        ch_trimmed = ch_samplesheet
+    } else {
+        ch_fastp_in = ch_samplesheet.map { meta, reads -> [ meta, reads, [] ] }
+        FASTP ( ch_fastp_in, false, false, false )
+        ch_trimmed = FASTP.out.reads
+        ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.json.collect { it[1] }.ifEmpty([]))
+    }
+
+    //
+    // Shared analysis-ready BAM (produced by the variants branch preprocessing,
+    // consumed by CNV / telomere / mito). Populated only if run_variants = true.
+    //
+    ch_analysis_bam = channel.empty()
+
+    //
+    // EPIGENOME branch
+    //
+    if ( params.run_epigenome ) {
+        FASTQ_EPIGENOME_BOWTIE2 (
+            ch_trimmed,
+            ch_bowtie2_index,
+            ch_fasta,
+            ch_fai,
+            ch_blacklist,
+            params.blacklist as boolean,
+            params.macs_gsize,
+            ch_motifs,
+            params.run_epigenome,        // run_rose gate (ROSE always on within epigenome)
+            params.rose_stitch,
+            params.rose_tss,
+            params.run_footprinting
+        )
+        ch_versions      = ch_versions.mix(FASTQ_EPIGENOME_BOWTIE2.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQ_EPIGENOME_BOWTIE2.out.multiqc_files)
+    }
+
+    //
+    // VARIANTS branch (also yields the shared analysis-ready BAM)
+    //
+    if ( params.run_variants ) {
+        def callers = params.variant_callers.tokenize(',')*.trim()
+        FASTQ_VARIANT_CALLING_ATAC (
+            ch_trimmed,
+            ch_bwa_index,
+            ch_fasta,
+            ch_fai,
+            ch_dict,
+            ch_known_sites,
+            ch_known_sites_tbi,
+            ch_vep_cache,
+            params.vep_genome,
+            params.vep_species,
+            params.vep_cache_version,
+            callers,
+            params.run_oncoplot
+        )
+        ch_analysis_bam = FASTQ_VARIANT_CALLING_ATAC.out.bam
+        ch_versions     = ch_versions.mix(FASTQ_VARIANT_CALLING_ATAC.out.versions)
+    }
+
+    //
+    // CNV / TELOMERE / MITO branches (consume the shared analysis-ready BAM).
+    // Require run_variants = true so the analysis-ready BAM exists.
+    //
+    if ( params.run_cnv ) {
+        BAM_CNV_QDNASEQ (
+            ch_analysis_bam,
+            params.qdnaseq_binsize,
+            params.qdnaseq_loss_threshold,
+            params.qdnaseq_gain_threshold
+        )
+        ch_versions = ch_versions.mix(BAM_CNV_QDNASEQ.out.versions)
+    }
+
+    if ( params.run_telomere ) {
+        BAM_TELOMERE_TELOMEREHUNTER ( ch_analysis_bam, ch_cytoband )
+        ch_versions = ch_versions.mix(BAM_TELOMERE_TELOMEREHUNTER.out.versions)
+    }
+
+    if ( params.run_mito ) {
+        BAM_MITO_MGATK ( ch_analysis_bam, params.mito_contig, params.mgatk_keep_duplicates )
+        ch_versions = ch_versions.mix(BAM_MITO_MGATK.out.versions)
+    }
+
+    //
+    // Collate and save software versions
+    //
+    def topic_versions = Channel.topic("versions")
+        .distinct()
+        .branch { entry ->
+            versions_file: entry instanceof Path
+            versions_tuple: true
+        }
+
+    def topic_versions_string = topic_versions.versions_tuple
+        .map { process, tool, version ->
+            [ process[process.lastIndexOf(':')+1..-1], "  ${tool}: ${version}" ]
+        }
+        .groupTuple(by:0)
+        .map { process, tool_versions ->
+            tool_versions.unique().sort()
+            "${process}:\n${tool_versions.join('\n')}"
+        }
+
+    softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
+        .mix(topic_versions_string)
+        .collectFile(
+            storeDir: "${params.outdir}/pipeline_info",
+            name:  'atacportray_software_'  + 'mqc_'  + 'versions.yml',
+            sort: true,
+            newLine: true
+        ).set { ch_collated_versions }
+
+    //
+    // MODULE: MultiQC
+    //
+    ch_multiqc_config        = channel.fromPath(
+        "$projectDir/assets/multiqc_config.yml", checkIfExists: true)
+    ch_multiqc_custom_config = params.multiqc_config ?
+        channel.fromPath(params.multiqc_config, checkIfExists: true) :
+        channel.empty()
+    ch_multiqc_logo          = params.multiqc_logo ?
+        channel.fromPath(params.multiqc_logo, checkIfExists: true) :
+        channel.empty()
+
+    summary_params      = paramsSummaryMap(
+        workflow, parameters_schema: "nextflow_schema.json")
+    ch_workflow_summary = channel.value(paramsSummaryMultiqc(summary_params))
+    ch_multiqc_files = ch_multiqc_files.mix(
+        ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+    ch_multiqc_custom_methods_description = params.multiqc_methods_description ?
+        file(params.multiqc_methods_description, checkIfExists: true) :
+        file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
+    ch_methods_description                = channel.value(
+        methodsDescriptionText(ch_multiqc_custom_methods_description))
+
+    ch_multiqc_files = ch_multiqc_files.mix(ch_collated_versions)
+    ch_multiqc_files = ch_multiqc_files.mix(
+        ch_methods_description.collectFile(
+            name: 'methods_description_mqc.yaml',
+            sort: true
+        )
+    )
+
+    MULTIQC (
+        ch_multiqc_files.collect(),
+        ch_multiqc_config.toList(),
+        ch_multiqc_custom_config.toList(),
+        ch_multiqc_logo.toList(),
+        [],
+        []
+    )
+
+    emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
+    versions       = ch_versions                 // channel: [ path(versions.yml) ]
+
+}
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    THE END
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/

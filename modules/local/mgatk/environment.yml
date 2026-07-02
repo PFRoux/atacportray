@@ -1,0 +1,6 @@
+name: mgatk
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::mgatk=0.7.0

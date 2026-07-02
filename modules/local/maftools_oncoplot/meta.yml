@@ -1,0 +1,50 @@
+name: "maftools_oncoplot"
+description: Merge per-sample MAFs and render an oncoplot with maftools
+keywords:
+  - maf
+  - oncoplot
+  - maftools
+  - variants
+tools:
+  - maftools:
+      description: "Summarize, analyze and visualize MAF files"
+      homepage: "https://bioconductor.org/packages/maftools/"
+      documentation: "https://bioconductor.org/packages/maftools/"
+      doi: "10.1101/gr.239244.118"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - mafs:
+        type: file
+        description: Per-sample MAF files (from vcf2maf)
+        pattern: "*.maf{,.gz}"
+output:
+  oncoplot:
+    - "*.oncoplot.pdf":
+        type: file
+        description: Oncoplot of recurrently mutated genes
+        pattern: "*.oncoplot.pdf"
+  summary:
+    - "*.summary.pdf":
+        type: file
+        description: MAF summary dashboard
+        pattern: "*.summary.pdf"
+  summary_txt:
+    - "*.maf_summary.txt":
+        type: file
+        description: Sample and gene summary tables
+        pattern: "*.maf_summary.txt"
+  merged_maf:
+    - "merged.maf.gz":
+        type: file
+        description: Merged cohort MAF
+        pattern: "merged.maf.gz"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@atacportray"
+maintainers:
+  - "@atacportray"

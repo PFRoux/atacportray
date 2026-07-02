@@ -1,0 +1,14 @@
+{
+    "consensus_peaks - stub": {
+        "content": [
+            [
+                "versions.yml:md5,bc0cb3d548761483fee7c9e870c1f519"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-07-01T22:09:12.393495"
+    }
+}

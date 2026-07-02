@@ -1,0 +1,90 @@
+name: "rose"
+description: Rank Ordering of Super-Enhancers from ATAC-seq peaks and signal
+keywords:
+  - super-enhancer
+  - enhancer
+  - rose
+  - atac-seq
+tools:
+  - rose:
+      description: "Rank Ordering of Super-Enhancers"
+      homepage: "http://younglab.wi.mit.edu/super_enhancer_code.html"
+      documentation: "https://bitbucket.org/young_computation/rose"
+      doi: "10.1016/j.cell.2013.03.035"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: "Groovy Map containing sample information e.g. `[ id:'sample1' ]`"
+    - peaks:
+        type: file
+        description: Constituent enhancer peaks (narrowPeak/BED)
+        pattern: "*.{narrowPeak,broadPeak,bed}"
+    - bam:
+        type: file
+        description: Signal BAM (ATAC-seq) used to rank enhancers
+        pattern: "*.bam"
+    - bai:
+        type: file
+        description: BAM index
+        pattern: "*.bai"
+  - genome_build:
+      type: string
+      description: Genome build label for ROSE (e.g. HG38)
+  - stitch:
+      type: integer
+      description: Stitching distance in bp (notebook 12500)
+  - tss_exclusion:
+      type: integer
+      description: TSS exclusion zone in bp (notebook 2500)
+output:
+  super_enhancers:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_SuperEnhancers.table.txt":
+          type: file
+          description: Ranked super-enhancer table
+          pattern: "*_SuperEnhancers.table.txt"
+  all_enhancers:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_AllEnhancers.table.txt":
+          type: file
+          description: All stitched enhancers with signal ranking
+          pattern: "*_AllEnhancers.table.txt"
+  enhancers_bed:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_Enhancers_withSuper.bed":
+          type: file
+          description: BED of enhancers flagged for super-enhancer status
+          pattern: "*_Enhancers_withSuper.bed"
+  stitched:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_SuperStitched.table.txt":
+          type: file
+          description: Stitched regions table
+          pattern: "*_SuperStitched.table.txt"
+  plot:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.pdf":
+          type: file
+          description: Super-enhancer hockey-stick plot
+          pattern: "*.pdf"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@atacportray"
+maintainers:
+  - "@atacportray"

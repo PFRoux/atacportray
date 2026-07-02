@@ -1,0 +1,14 @@
+{
+    "maftools_oncoplot - stub": {
+        "content": [
+            [
+                "versions.yml:md5,1cf3997955df461c7bd07f61a9b79c98"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-07-01T22:09:14.87474"
+    }
+}

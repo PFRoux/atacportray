@@ -1,0 +1,91 @@
+name: "tobias_bindetect"
+description: Detect differential transcription factor binding from footprint scores
+keywords:
+  - atac-seq
+  - footprinting
+  - transcription-factor
+  - motif
+  - tobias
+tools:
+  - tobias:
+      description: "Transcription factor Occupancy prediction By Investigation of ATAC-seq Signal"
+      homepage: "https://github.com/loosolab/TOBIAS"
+      documentation: "https://github.com/loosolab/TOBIAS/wiki"
+      doi: "10.1038/s41467-020-18035-1"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: "Groovy Map containing sample information e.g. `[ id:'sample1' ]`"
+    - footprints:
+        type: file
+        description: One or more footprint score bigWigs from TOBIAS ScoreBigwig
+        pattern: "*_footprints.bw"
+  - - motifs:
+        type: file
+        description: Motif database (HOCOMOCO v11) in JASPAR or MEME format
+        pattern: "*.{jaspar,meme,txt}"
+  - - meta2:
+        type: map
+        description: "Groovy Map for the genome e.g. `[ id:'GRCh38' ]`"
+    - fasta:
+        type: file
+        description: Reference genome FASTA
+        pattern: "*.{fa,fasta}"
+  - - meta3:
+        type: map
+        description: "Groovy Map for the peak set"
+    - peaks:
+        type: file
+        description: Consensus peak regions (BED)
+        pattern: "*.{bed,narrowPeak}"
+output:
+  results:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "bindetect/*bindetect_results.txt":
+          type: file
+          description: Per-TF differential binding statistics
+          pattern: "*bindetect_results.txt"
+  results_xlsx:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "bindetect/*bindetect_results.xlsx":
+          type: file
+          description: Per-TF differential binding statistics (Excel)
+          pattern: "*bindetect_results.xlsx"
+  figures:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "bindetect/*.pdf":
+          type: file
+          description: Volcano and diff-binding figures
+          pattern: "*.pdf"
+  overview:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "bindetect/*_overview.txt":
+          type: file
+          description: Overview table
+          pattern: "*_overview.txt"
+  outdir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "bindetect/":
+          type: directory
+          description: Full BINDetect output directory (per-TF subfolders)
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@atacportray"
+maintainers:
+  - "@atacportray"

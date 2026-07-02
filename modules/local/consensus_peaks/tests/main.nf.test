@@ -1,0 +1,28 @@
+nextflow_process {
+
+    name "Test Process CONSENSUS_PEAKS"
+    script "../main.nf"
+    process "CONSENSUS_PEAKS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "consensus_peaks"
+
+    test("consensus_peaks - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [ file("s1.narrowPeak"), file("s2.narrowPeak") ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.bed }
+            )
+        }
+    }
+}

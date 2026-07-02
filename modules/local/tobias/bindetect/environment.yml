@@ -1,0 +1,6 @@
+name: tobias
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::tobias=0.16.1

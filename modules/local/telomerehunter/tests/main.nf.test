@@ -1,0 +1,29 @@
+nextflow_process {
+
+    name "Test Process TELOMEREHUNTER"
+    script "../main.nf"
+    process "TELOMEREHUNTER"
+
+    tag "modules"
+    tag "modules_local"
+    tag "telomerehunter"
+
+    test("telomerehunter - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [ [ id:'test' ], file("test.bam"), file("test.bam.bai") ]
+                input[1] = file("cytoBand.txt")
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.summary }
+            )
+        }
+    }
+}

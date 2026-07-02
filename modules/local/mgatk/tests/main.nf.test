@@ -1,0 +1,30 @@
+nextflow_process {
+
+    name "Test Process MGATK"
+    script "../main.nf"
+    process "MGATK"
+
+    tag "modules"
+    tag "modules_local"
+    tag "mgatk"
+
+    test("mgatk - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [ [ id:'test' ], file("test.bam"), file("test.bam.bai") ]
+                input[1] = 'chrM'
+                input[2] = true
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.final_dir }
+            )
+        }
+    }
+}

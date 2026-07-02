@@ -1,0 +1,295 @@
+{
+    "@context": [
+        "https://w3id.org/ro/crate/1.2/context",
+        {
+            "GithubService": "https://w3id.org/ro/terms/test#GithubService",
+            "JenkinsService": "https://w3id.org/ro/terms/test#JenkinsService",
+            "PlanemoEngine": "https://w3id.org/ro/terms/test#PlanemoEngine",
+            "TestDefinition": "https://w3id.org/ro/terms/test#TestDefinition",
+            "TestInstance": "https://w3id.org/ro/terms/test#TestInstance",
+            "TestService": "https://w3id.org/ro/terms/test#TestService",
+            "TestSuite": "https://w3id.org/ro/terms/test#TestSuite",
+            "TravisService": "https://w3id.org/ro/terms/test#TravisService",
+            "definition": "https://w3id.org/ro/terms/test#definition",
+            "engineVersion": "https://w3id.org/ro/terms/test#engineVersion",
+            "instance": "https://w3id.org/ro/terms/test#instance",
+            "resource": "https://w3id.org/ro/terms/test#resource",
+            "runsOn": "https://w3id.org/ro/terms/test#runsOn"
+        }
+    ],
+    "@graph": [
+        {
+            "@id": "./",
+            "@type": "Dataset",
+            "creativeWorkStatus": "InProgress",
+            "datePublished": "2026-07-01T19:47:15+00:00",
+            "description": "# atacportray/atacportray\n\n\n[![GitHub Actions CI Status](https://github.com/atacportray/atacportray/actions/workflows/nf-test.yml/badge.svg)](https://github.com/atacportray/atacportray/actions/workflows/nf-test.yml)\n[![GitHub Actions Linting Status](https://github.com/atacportray/atacportray/actions/workflows/linting.yml/badge.svg)](https://github.com/atacportray/atacportray/actions/workflows/linting.yml)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)\n[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)\n\n[![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.04.0-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)\n[![nf-core template version](https://img.shields.io/badge/nf--core_template-3.5.0-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/3.5.0)\n[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)\n[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)\n[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)\n[![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/atacportray/atacportray)\n\n## Introduction\n\n**atacportray/atacportray** is a bioinformatics pipeline for the multi-layer analysis of bulk **ATAC-seq** data from paired-end FASTQ files. Starting from raw reads and a reference genome, it produces a full epigenomic portrait (chromatin accessibility peaks, super-enhancers, coverage tracks and TF footprints) and, optionally, layers genetic and structural readouts mined from the same libraries: short-variant calls, copy-number profiles, telomere content and mitochondrial genotypes. All branches converge on a single [`MultiQC`](http://multiqc.info/) report.\n\nThe workflow is organised as a shared preprocessing core followed by five toggleable analysis branches:\n\n1. Read QC and adapter/quality trimming ([`fastp`](https://github.com/OpenGene/fastp))\n2. **Epigenome branch** (`--run_epigenome`): Bowtie2 alignment, blacklist filtering, peak calling ([`MACS3`](https://github.com/macs3-project/MACS)), consensus peaks, coverage bigWigs ([`deepTools`](https://deeptools.readthedocs.io/)), super-enhancers ([`ROSE`](http://younglab.wi.mit.edu/super_enhancer_code.html)) and optional TF footprinting ([`TOBIAS`](https://github.com/loosolab/TOBIAS))\n3. **Variant branch** (`--run_variants`): BWA-MEM alignment, GATK MarkDuplicates + BQSR, multi-caller short-variant calling ([`DeepVariant`](https://github.com/google/deepvariant), [`FreeBayes`](https://github.com/freebayes/freebayes), [`GATK HaplotypeCaller`](https://gatk.broadinstitute.org/), [`bcftools`](https://samtools.github.io/bcftools/)), [`VEP`](https://www.ensembl.org/vep) annotation, [`vcf2maf`](https://github.com/mskcc/vcf2maf) conversion and a [`maftools`](https://github.com/PoisonAlien/maftools) oncoplot. This branch also yields the shared analysis-ready BAM consumed by the CNV / telomere / mito branches.\n4. **CNV branch** (`--run_cnv`): copy-number profiling with [`QDNAseq`](https://bioconductor.org/packages/QDNAseq/)\n5. **Telomere branch** (`--run_telomere`): telomere-content estimation with [`TelomereHunter`](https://www.dkfz.de/en/applied-bioinformatics/telomerehunter/telomerehunter.html)\n6. **Mitochondrial branch** (`--run_mito`): mtDNA variant/heteroplasmy calling with [`mgatk`](https://github.com/caleblareau/mgatk)\n7. Aggregate QC report ([`MultiQC`](http://multiqc.info/))\n\nOnly the epigenome branch runs by default; the genetic/structural branches are opt-in because they require a full-size reference genome (and, for CNV/telomere/mito, `--run_variants` to build the shared analysis-ready BAM). See [usage documentation](docs/usage.md) for the branch dependency graph.\n\n## Usage\n\n> [!NOTE]\n> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.\n\nFirst, prepare a samplesheet with your input data that looks as follows:\n\n`samplesheet.csv`:\n\n```csv\nsample,fastq_1,fastq_2,condition,patient\nIC_High_1,s1_R1.fastq.gz,s1_R2.fastq.gz,IC_High,P1\nIC_Low_1,s2_R1.fastq.gz,s2_R2.fastq.gz,IC_Low,P2\n```\n\nEach row is one paired-end ATAC-seq sample. `condition` groups samples for consensus-peak building and downstream comparisons; `patient` is an optional grouping key. See [usage documentation](docs/usage.md) for the full column specification.\n\nNow, you can run the pipeline using:\n\n```bash\nnextflow run atacportray/atacportray \\\n   -profile <docker/singularity/.../institute> \\\n   --input samplesheet.csv \\\n   --fasta genome.fasta \\\n   --outdir <OUTDIR>\n```\n\nTo enable the genetic/structural branches on a full-size reference:\n\n```bash\nnextflow run atacportray/atacportray \\\n   -profile <docker/singularity> \\\n   --input samplesheet.csv \\\n   --fasta genome.fasta \\\n   --run_variants --run_cnv --run_telomere --run_mito \\\n   --variant_callers deepvariant,freebayes,haplotypecaller,bcftools \\\n   --outdir <OUTDIR>\n```\n\n> [!WARNING]\n> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).\n\n## Credits\n\natacportray/atacportray was originally written by Toumi et al..\n\nWe thank the following people for their extensive assistance in the development of this pipeline.\n\n## Contributions and Support\n\nIf you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).\n\n## Citations\n\nAn extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.\n\nThis pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/main/LICENSE).\n\n> **The nf-core framework for community-curated bioinformatics pipelines.**\n>\n> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.\n>\n> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).\n",
+            "hasPart": [
+                {
+                    "@id": "main.nf"
+                },
+                {
+                    "@id": "assets/"
+                },
+                {
+                    "@id": "conf/"
+                },
+                {
+                    "@id": "docs/"
+                },
+                {
+                    "@id": "modules/"
+                },
+                {
+                    "@id": "modules/nf-core/"
+                },
+                {
+                    "@id": "workflows/"
+                },
+                {
+                    "@id": "subworkflows/"
+                },
+                {
+                    "@id": "nextflow.config"
+                },
+                {
+                    "@id": "README.md"
+                },
+                {
+                    "@id": "nextflow_schema.json"
+                },
+                {
+                    "@id": "CHANGELOG.md"
+                },
+                {
+                    "@id": "LICENSE"
+                },
+                {
+                    "@id": "CITATIONS.md"
+                },
+                {
+                    "@id": "modules.json"
+                },
+                {
+                    "@id": "docs/usage.md"
+                },
+                {
+                    "@id": "docs/output.md"
+                },
+                {
+                    "@id": ".nf-core.yml"
+                },
+                {
+                    "@id": ".pre-commit-config.yaml"
+                },
+                {
+                    "@id": ".prettierignore"
+                }
+            ],
+            "isBasedOn": "https://github.com/atacportray/atacportray",
+            "license": "MIT",
+            "mainEntity": {
+                "@id": "main.nf"
+            },
+            "mentions": [
+                {
+                    "@id": "#836bb899-471d-4be1-b637-4aa15d3a319e"
+                }
+            ],
+            "name": "atacportray/atacportray"
+        },
+        {
+            "@id": "ro-crate-metadata.json",
+            "@type": "CreativeWork",
+            "about": {
+                "@id": "./"
+            },
+            "conformsTo": [
+                {
+                    "@id": "https://w3id.org/ro/crate/1.2"
+                },
+                {
+                    "@id": "https://w3id.org/workflowhub/workflow-ro-crate/1.0"
+                }
+            ]
+        },
+        {
+            "@id": "main.nf",
+            "@type": [
+                "File",
+                "SoftwareSourceCode",
+                "ComputationalWorkflow"
+            ],
+            "dateCreated": "",
+            "dateModified": "2026-07-01T21:47:15Z",
+            "dct:conformsTo": "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/",
+            "keywords": [
+                "nf-core",
+                "nextflow"
+            ],
+            "license": [
+                "MIT"
+            ],
+            "name": [
+                "atacportray/atacportray"
+            ],
+            "programmingLanguage": {
+                "@id": "https://w3id.org/workflowhub/workflow-ro-crate#nextflow"
+            },
+            "sdPublisher": {
+                "@id": "https://nf-co.re/"
+            },
+            "url": [
+                "https://github.com/atacportray/atacportray",
+                "https://nf-co.re/atacportray/atacportray/dev/"
+            ],
+            "version": [
+                "1.0.0dev"
+            ]
+        },
+        {
+            "@id": "https://w3id.org/workflowhub/workflow-ro-crate#nextflow",
+            "@type": "ComputerLanguage",
+            "identifier": {
+                "@id": "https://www.nextflow.io/"
+            },
+            "name": "Nextflow",
+            "url": {
+                "@id": "https://www.nextflow.io/"
+            },
+            "version": "!>=25.04.0"
+        },
+        {
+            "@id": "#836bb899-471d-4be1-b637-4aa15d3a319e",
+            "@type": "TestSuite",
+            "instance": [
+                {
+                    "@id": "#fd5bd98e-f9f5-4106-938b-e9e40ec906ac"
+                }
+            ],
+            "mainEntity": {
+                "@id": "main.nf"
+            },
+            "name": "Test suite for atacportray/atacportray"
+        },
+        {
+            "@id": "#fd5bd98e-f9f5-4106-938b-e9e40ec906ac",
+            "@type": "TestInstance",
+            "name": "GitHub Actions workflow for testing atacportray/atacportray",
+            "resource": "repos/atacportray/atacportray/actions/workflows/nf-test.yml",
+            "runsOn": {
+                "@id": "https://w3id.org/ro/terms/test#GithubService"
+            },
+            "url": "https://api.github.com"
+        },
+        {
+            "@id": "https://w3id.org/ro/terms/test#GithubService",
+            "@type": "TestService",
+            "name": "Github Actions",
+            "url": {
+                "@id": "https://github.com"
+            }
+        },
+        {
+            "@id": "assets/",
+            "@type": "Dataset",
+            "description": "Additional files"
+        },
+        {
+            "@id": "conf/",
+            "@type": "Dataset",
+            "description": "Configuration files"
+        },
+        {
+            "@id": "docs/",
+            "@type": "Dataset",
+            "description": "Markdown files for documenting the pipeline"
+        },
+        {
+            "@id": "modules/",
+            "@type": "Dataset",
+            "description": "Modules used by the pipeline"
+        },
+        {
+            "@id": "modules/nf-core/",
+            "@type": "Dataset",
+            "description": "nf-core modules"
+        },
+        {
+            "@id": "workflows/",
+            "@type": "Dataset",
+            "description": "Main pipeline workflows to be executed in main.nf"
+        },
+        {
+            "@id": "subworkflows/",
+            "@type": "Dataset",
+            "description": "Smaller subworkflows"
+        },
+        {
+            "@id": "nextflow.config",
+            "@type": "File",
+            "description": "Main Nextflow configuration file"
+        },
+        {
+            "@id": "README.md",
+            "@type": "File",
+            "description": "Basic pipeline usage information"
+        },
+        {
+            "@id": "nextflow_schema.json",
+            "@type": "File",
+            "description": "JSON schema for pipeline parameter specification"
+        },
+        {
+            "@id": "CHANGELOG.md",
+            "@type": "File",
+            "description": "Information on changes made to the pipeline"
+        },
+        {
+            "@id": "LICENSE",
+            "@type": "File",
+            "description": "The license - should be MIT"
+        },
+        {
+            "@id": "CITATIONS.md",
+            "@type": "File",
+            "description": "Citations needed when using the pipeline"
+        },
+        {
+            "@id": "modules.json",
+            "@type": "File",
+            "description": "Version information for modules from nf-core/modules"
+        },
+        {
+            "@id": "docs/usage.md",
+            "@type": "File",
+            "description": "Usage documentation"
+        },
+        {
+            "@id": "docs/output.md",
+            "@type": "File",
+            "description": "Output documentation"
+        },
+        {
+            "@id": ".nf-core.yml",
+            "@type": "File",
+            "description": "nf-core configuration file, configuring template features and linting rules"
+        },
+        {
+            "@id": ".pre-commit-config.yaml",
+            "@type": "File",
+            "description": "Configuration file for pre-commit hooks"
+        },
+        {
+            "@id": ".prettierignore",
+            "@type": "File",
+            "description": "Ignore file for prettier"
+        },
+        {
+            "@id": "https://nf-co.re/",
+            "@type": "Organization",
+            "name": "nf-core",
+            "url": "https://nf-co.re/"
+        }
+    ]
+}

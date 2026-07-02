@@ -1,0 +1,268 @@
+{
+    "name": "atacportray/atacportray",
+    "homePage": "https://github.com/atacportray/atacportray",
+    "repos": {
+        "https://github.com/nf-core/modules.git": {
+            "modules": {
+                "nf-core": {
+                    "bcftools/index": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bcftools/mpileup": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bcftools/sort": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bedtools/intersect": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bedtools/merge": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bowtie2/align": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bowtie2/build": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bwa/index": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bwa/mem": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "deeptools/bamcoverage": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "deepvariant/rundeepvariant": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "ensemblvep/vep": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "fastp": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "freebayes": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "gatk4/applybqsr": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "gatk4/baserecalibrator": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "gatk4/createsequencedictionary": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "gatk4/haplotypecaller": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "gatk4/markduplicates": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "gunzip": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "macs3/callpeak": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "multiqc": {
+                        "branch": "master",
+                        "git_sha": "af27af1be706e6a2bb8fe454175b0cdf77f47b49",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "samtools/faidx": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "samtools/flagstat": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "samtools/idxstats": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "samtools/index": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "samtools/sort": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "samtools/stats": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "samtools/view": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "tabix/bgziptabix": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "tabix/tabix": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "untar": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "vcf2maf": {
+                        "branch": "master",
+                        "git_sha": "8d46167be23f6586e70801a08f5adb44debc45d3",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    }
+                }
+            },
+            "subworkflows": {
+                "nf-core": {
+                    "utils_nextflow_pipeline": {
+                        "branch": "master",
+                        "git_sha": "05954dab2ff481bcb999f24455da29a5828af08d",
+                        "installed_by": [
+                            "subworkflows"
+                        ]
+                    },
+                    "utils_nfcore_pipeline": {
+                        "branch": "master",
+                        "git_sha": "271e7fc14eb1320364416d996fb077421f3faed2",
+                        "installed_by": [
+                            "subworkflows"
+                        ]
+                    },
+                    "utils_nfschema_plugin": {
+                        "branch": "master",
+                        "git_sha": "4b406a74dc0449c0401ed87d5bfff4252fd277fd",
+                        "installed_by": [
+                            "subworkflows"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,12 @@
+name: rose
+# ROSE is not available via conda/bioconda; it runs from a custom container
+# (see modules/local/rose/Dockerfile). This environment.yml documents the
+# runtime for reference / local execution only.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::python=2.7
+  - bioconda::samtools=1.9
+  - conda-forge::r-base=3.6
+  - bioconda::bamliquidator

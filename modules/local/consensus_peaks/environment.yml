@@ -1,0 +1,6 @@
+name: consensus_peaks
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::bedtools=2.31.1

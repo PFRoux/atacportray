@@ -1,0 +1,35 @@
+nextflow_process {
+
+    name "Test Process TOBIAS_ATACORRECT"
+    script "../main.nf"
+    process "TOBIAS_ATACORRECT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "tobias"
+    tag "tobias/atacorrect"
+
+    test("atacorrect - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ],
+                    file("test.bam"),
+                    file("test.bam.bai"),
+                    file("test.peaks.bed")
+                ]
+                input[1] = [ [ id:'GRCh38' ], file("genome.fasta") ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.corrected }
+            )
+        }
+    }
+}

@@ -1,0 +1,81 @@
+name: "tobias_atacorrect"
+description: Correct ATAC-seq cutsite signal for Tn5 transposase insertion bias
+keywords:
+  - atac-seq
+  - footprinting
+  - bias-correction
+  - tobias
+tools:
+  - tobias:
+      description: "Transcription factor Occupancy prediction By Investigation of ATAC-seq Signal"
+      homepage: "https://github.com/loosolab/TOBIAS"
+      documentation: "https://github.com/loosolab/TOBIAS/wiki"
+      tool_dev_url: "https://github.com/loosolab/TOBIAS"
+      doi: "10.1038/s41467-020-18035-1"
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: "Groovy Map containing sample information e.g. `[ id:'sample1' ]`"
+    - bam:
+        type: file
+        description: Coordinate-sorted ATAC-seq BAM file
+        pattern: "*.bam"
+    - bai:
+        type: file
+        description: BAM index
+        pattern: "*.bai"
+    - peaks:
+        type: file
+        description: Peak regions (BED) defining accessible chromatin
+        pattern: "*.{bed,narrowPeak,broadPeak}"
+  - - meta2:
+        type: map
+        description: "Groovy Map for the genome e.g. `[ id:'GRCh38' ]`"
+    - fasta:
+        type: file
+        description: Reference genome FASTA
+        pattern: "*.{fa,fasta}"
+output:
+  corrected:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_corrected.bw":
+          type: file
+          description: Bias-corrected Tn5 signal bigWig
+          pattern: "*_corrected.bw"
+  expected:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_expected.bw":
+          type: file
+          description: Expected (bias) signal bigWig
+          pattern: "*_expected.bw"
+  uncorrected:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_uncorrected.bw":
+          type: file
+          description: Uncorrected signal bigWig
+          pattern: "*_uncorrected.bw"
+  bias:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*_bias.bw":
+          type: file
+          description: Estimated Tn5 bias track
+          pattern: "*_bias.bw"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@atacportray"
+maintainers:
+  - "@atacportray"

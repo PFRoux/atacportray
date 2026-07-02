@@ -1,0 +1,14 @@
+{
+    "telomerehunter - stub": {
+        "content": [
+            [
+                "versions.yml:md5,ab29934059128ad53c13340e26606caf"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-07-01T22:09:24.966493"
+    }
+}

@@ -1,0 +1,14 @@
+{
+    "rose - stub": {
+        "content": [
+            [
+                "versions.yml:md5,950b102e21c46b2efa1a6c1ab65129f7"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-07-01T22:09:22.401495"
+    }
+}

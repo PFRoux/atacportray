@@ -1,0 +1,14 @@
+{
+    "qdnaseq - stub": {
+        "content": [
+            [
+                "versions.yml:md5,7d055b3381cc37e9095f278260529d3f"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-07-01T22:09:19.865672"
+    }
+}

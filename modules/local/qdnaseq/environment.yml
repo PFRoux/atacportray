@@ -1,0 +1,8 @@
+name: qdnaseq
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::bioconductor-qdnaseq=1.46.0
+  - bioconda::bioconductor-qdnaseq.hg19=1.32.0
+  - conda-forge::r-base>=4.5

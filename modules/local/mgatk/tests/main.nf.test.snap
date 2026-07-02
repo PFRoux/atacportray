@@ -1,0 +1,14 @@
+{
+    "mgatk - stub": {
+        "content": [
+            [
+                "versions.yml:md5,35e871bab01f56b6ebd0dd21313f0631"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-07-01T22:09:17.331448"
+    }
+}

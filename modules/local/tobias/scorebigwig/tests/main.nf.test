@@ -1,0 +1,33 @@
+nextflow_process {
+
+    name "Test Process TOBIAS_SCOREBIGWIG"
+    script "../main.nf"
+    process "TOBIAS_SCOREBIGWIG"
+
+    tag "modules"
+    tag "modules_local"
+    tag "tobias"
+    tag "tobias/scorebigwig"
+
+    test("scorebigwig - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ],
+                    file("test_corrected.bw"),
+                    file("test.peaks.bed")
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.footprints }
+            )
+        }
+    }
+}

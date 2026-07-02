@@ -1,0 +1,611 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/atacportray/atacportray/master/nextflow_schema.json",
+    "title": "atacportray/atacportray pipeline parameters",
+    "description": "Integrative bulk ATAC-seq pipeline extracting epigenomes, genomes, CNVs, telomeres and mitochondrial variants from a single ATAC-seq assay",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "input",
+                "outdir"
+            ],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "schema": "assets/schema_input.json",
+                    "mimetype": "text/csv",
+                    "pattern": "^\\S+\\.csv$",
+                    "description": "Path to comma-separated file containing information about the samples in the experiment.",
+                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address for completion summary.",
+                    "fa_icon": "fas fa-envelope",
+                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                },
+                "multiqc_title": {
+                    "type": "string",
+                    "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
+                    "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "reference_genome_options": {
+            "title": "Reference genome options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "Reference genome files and indices (GRCh38/hg38).",
+            "properties": {
+                "genome": {
+                    "type": "string",
+                    "description": "Name of iGenomes reference key (optional; explicit --fasta preferred).",
+                    "fa_icon": "fas fa-book"
+                },
+                "fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "mimetype": "text/plain",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
+                    "description": "Path to genome FASTA (GRCh38). Bgzipped or plain.",
+                    "fa_icon": "far fa-file-code"
+                },
+                "fasta_fai": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Path to FASTA .fai index. Built automatically if absent.",
+                    "fa_icon": "fas fa-file"
+                },
+                "dict": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "GATK sequence dictionary (.dict). Built automatically if absent.",
+                    "fa_icon": "fas fa-file"
+                },
+                "bowtie2_index": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Pre-built Bowtie2 index directory. Built automatically if absent.",
+                    "fa_icon": "fas fa-folder"
+                },
+                "bwa_index": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Pre-built BWA-MEM index directory. Built automatically if absent.",
+                    "fa_icon": "fas fa-folder"
+                },
+                "gtf": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "^\\S+\\.gtf(\\.gz)?$",
+                    "description": "Gene annotation GTF (optional).",
+                    "fa_icon": "fas fa-file"
+                },
+                "blacklist": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "ENCODE blacklist BED (epigenome peak filtering + CNV).",
+                    "fa_icon": "fas fa-ban"
+                },
+                "known_sites": {
+                    "type": "string",
+                    "description": "Known-sites VCF(s) for BQSR (dbSNP/known indels). Comma-separated.",
+                    "fa_icon": "fas fa-file"
+                },
+                "known_sites_tbi": {
+                    "type": "string",
+                    "description": "Tabix indices for known-sites VCF(s).",
+                    "fa_icon": "fas fa-file"
+                }
+            }
+        },
+        "analysis_layer_toggles": {
+            "title": "Analysis layer toggles",
+            "type": "object",
+            "fa_icon": "fas fa-toggle-on",
+            "description": "Enable/disable each multi-omic readout extracted from the single ATAC-seq assay.",
+            "properties": {
+                "run_epigenome": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Bowtie2 ENCODE-style accessibility, peaks, super-enhancers (ROSE) and footprints (TOBIAS).",
+                    "fa_icon": "fas fa-chart-area"
+                },
+                "run_variants": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "BWA-MEM + GATK preprocessing + multi-caller SNV/indel calling and annotation.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "run_cnv": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "QDNAseq copy-number profiling from the analysis-ready BAM.",
+                    "fa_icon": "fas fa-wave-square"
+                },
+                "run_telomere": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "TelomereHunter telomere-content estimation.",
+                    "fa_icon": "fas fa-grip-lines"
+                },
+                "run_mito": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "mgatk mitochondrial variant calling.",
+                    "fa_icon": "fas fa-circle-notch"
+                }
+            }
+        },
+        "read_trimming_options": {
+            "title": "Read trimming options",
+            "type": "object",
+            "fa_icon": "fas fa-cut",
+            "description": "Adapter and quality trimming with fastp.",
+            "properties": {
+                "skip_trimming": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip fastp read trimming.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "save_trimmed": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Publish trimmed FastQ files.",
+                    "fa_icon": "fas fa-save"
+                },
+                "adapter_fasta": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional FASTA of adapters for fastp.",
+                    "fa_icon": "fas fa-file"
+                }
+            }
+        },
+        "epigenome_options": {
+            "title": "Epigenome branch options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-area",
+            "description": "ENCODE-style accessibility, MACS3 peaks, ROSE super-enhancers and TOBIAS footprints. Defaults reproduce the source notebook.",
+            "properties": {
+                "bamcoverage_binsize": {
+                    "type": "integer",
+                    "default": 20,
+                    "description": "deepTools bamCoverage bin size (bp).",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "bamcoverage_smoothlength": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "deepTools bamCoverage smoothing window (bp).",
+                    "fa_icon": "fas fa-wave-square"
+                },
+                "bamcoverage_normalization": {
+                    "type": "string",
+                    "default": "RPKM",
+                    "enum": [
+                        "RPKM",
+                        "CPM",
+                        "BPM",
+                        "RPGC",
+                        "None"
+                    ],
+                    "description": "Coverage normalization method.",
+                    "fa_icon": "fas fa-balance-scale"
+                },
+                "macs_gsize": {
+                    "type": "string",
+                    "default": "2700000000",
+                    "description": "MACS3 effective genome size ('hs' for GRCh38).",
+                    "fa_icon": "fas fa-ruler"
+                },
+                "macs_qvalue": {
+                    "type": "number",
+                    "default": 0.1,
+                    "description": "MACS3 q-value (FDR) cutoff for peak calling.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "macs_format": {
+                    "type": "string",
+                    "default": "BAMPE",
+                    "enum": [
+                        "BAMPE",
+                        "BAM"
+                    ],
+                    "description": "MACS3 input format (paired-end BAMPE).",
+                    "fa_icon": "fas fa-file"
+                },
+                "macs_keepdup": {
+                    "type": "string",
+                    "default": "all",
+                    "description": "MACS3 --keep-dup setting.",
+                    "fa_icon": "fas fa-copy"
+                },
+                "rose_genome": {
+                    "type": "string",
+                    "default": "HG38",
+                    "description": "ROSE genome build label.",
+                    "fa_icon": "fas fa-book"
+                },
+                "rose_stitch": {
+                    "type": "integer",
+                    "default": 12500,
+                    "description": "ROSE stitching distance (bp) for super-enhancers.",
+                    "fa_icon": "fas fa-link"
+                },
+                "rose_tss": {
+                    "type": "integer",
+                    "default": 2500,
+                    "description": "ROSE TSS exclusion zone (bp).",
+                    "fa_icon": "fas fa-ban"
+                },
+                "run_footprinting": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Run TOBIAS footprinting (ATACorrect -> ScoreBigwig -> BINDetect).",
+                    "fa_icon": "fas fa-shoe-prints"
+                },
+                "tobias_motifs": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Motif database for TOBIAS BINDetect (HOCOMOCO v11, JASPAR/MEME format).",
+                    "fa_icon": "fas fa-file"
+                },
+                "consensus_peak_mode": {
+                    "type": "string",
+                    "default": "all",
+                    "description": "Strategy to build a consensus peak set across samples.",
+                    "fa_icon": "fas fa-object-group"
+                }
+            }
+        },
+        "variants_options": {
+            "title": "Variant calling branch options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "description": "sarek-style GATK preprocessing and multi-caller SNV/indel calling on the same ATAC reads.",
+            "properties": {
+                "variant_callers": {
+                    "type": "string",
+                    "default": "deepvariant,freebayes,haplotypecaller,bcftools",
+                    "description": "Comma-separated subset of callers: deepvariant, freebayes, haplotypecaller, bcftools.",
+                    "fa_icon": "fas fa-list",
+                    "pattern": "^((deepvariant|freebayes|haplotypecaller|bcftools)(,(deepvariant|freebayes|haplotypecaller|bcftools))*)?$"
+                },
+                "skip_bqsr": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip GATK BaseRecalibrator/ApplyBQSR.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "variants_in_peaks_only": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Restrict variant calling to accessible (peak) regions.",
+                    "fa_icon": "fas fa-crop"
+                },
+                "vep_cache": {
+                    "type": "string",
+                    "format": "path",
+                    "description": "Ensembl VEP cache directory.",
+                    "fa_icon": "fas fa-folder"
+                },
+                "vep_genome": {
+                    "type": "string",
+                    "default": "GRCh38",
+                    "description": "VEP assembly.",
+                    "fa_icon": "fas fa-book"
+                },
+                "vep_species": {
+                    "type": "string",
+                    "default": "homo_sapiens",
+                    "description": "VEP species.",
+                    "fa_icon": "fas fa-book"
+                },
+                "vep_cache_version": {
+                    "type": "integer",
+                    "default": 113,
+                    "description": "VEP cache version.",
+                    "fa_icon": "fas fa-hashtag"
+                },
+                "skip_annotation": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Skip VEP annotation.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "run_oncoplot": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Generate maftools oncoplot from annotated variants.",
+                    "fa_icon": "fas fa-th"
+                }
+            }
+        },
+        "cnv_options": {
+            "title": "CNV branch options (QDNAseq)",
+            "type": "object",
+            "fa_icon": "fas fa-wave-square",
+            "description": "Copy-number calling with QDNAseq.",
+            "properties": {
+                "qdnaseq_binsize": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "QDNAseq bin size (kb).",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "qdnaseq_loss_threshold": {
+                    "type": "number",
+                    "default": -0.4,
+                    "description": "log2 ratio threshold to call a loss.",
+                    "fa_icon": "fas fa-arrow-down"
+                },
+                "qdnaseq_gain_threshold": {
+                    "type": "number",
+                    "default": 0.4,
+                    "description": "log2 ratio threshold to call a gain.",
+                    "fa_icon": "fas fa-arrow-up"
+                }
+            }
+        },
+        "telomere_options": {
+            "title": "Telomere branch options (TelomereHunter)",
+            "type": "object",
+            "fa_icon": "fas fa-grip-lines",
+            "description": "Telomere-content estimation with TelomereHunter.",
+            "properties": {
+                "cytoband": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "UCSC cytoBand file (required for --run_telomere).",
+                    "fa_icon": "fas fa-file"
+                }
+            }
+        },
+        "mito_options": {
+            "title": "Mitochondria branch options (mgatk)",
+            "type": "object",
+            "fa_icon": "fas fa-circle-notch",
+            "description": "Mitochondrial variant calling with mgatk.",
+            "properties": {
+                "mito_contig": {
+                    "type": "string",
+                    "default": "chrM",
+                    "description": "Mitochondrial contig name in the reference.",
+                    "fa_icon": "fas fa-tag"
+                },
+                "mgatk_keep_duplicates": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Pass --keep-duplicates to mgatk.",
+                    "fa_icon": "fas fa-copy"
+                }
+            }
+        },
+        "institutional_config_options": {
+            "title": "Institutional config options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Parameters used to describe centralised config profiles. These should not be edited.",
+            "help_text": "The centralised nf-core configuration profiles use a handful of pipeline parameters to describe themselves. This information is then printed to the Nextflow log when you run a pipeline. You should not need to change these values when you run a pipeline.",
+            "properties": {
+                "custom_config_version": {
+                    "type": "string",
+                    "description": "Git commit id for Institutional configs.",
+                    "default": "master",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "custom_config_base": {
+                    "type": "string",
+                    "description": "Base directory for Institutional configs.",
+                    "default": "https://raw.githubusercontent.com/nf-core/configs/master",
+                    "hidden": true,
+                    "help_text": "If you're running offline, Nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell Nextflow where to find them with this parameter.",
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_name": {
+                    "type": "string",
+                    "description": "Institutional config name.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_description": {
+                    "type": "string",
+                    "description": "Institutional config description.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_contact": {
+                    "type": "string",
+                    "description": "Institutional config contact information.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_url": {
+                    "type": "string",
+                    "description": "Institutional config URL link.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                }
+            }
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+            "properties": {
+                "version": {
+                    "type": "boolean",
+                    "description": "Display version and exit.",
+                    "fa_icon": "fas fa-question-circle",
+                    "hidden": true
+                },
+                "publish_dir_mode": {
+                    "type": "string",
+                    "default": "copy",
+                    "description": "Method used to save pipeline results to output directory.",
+                    "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
+                    "fa_icon": "fas fa-copy",
+                    "enum": [
+                        "symlink",
+                        "rellink",
+                        "link",
+                        "copy",
+                        "copyNoFollow",
+                        "move"
+                    ],
+                    "hidden": true
+                },
+                "email_on_fail": {
+                    "type": "string",
+                    "description": "Email address for completion summary, only when pipeline fails.",
+                    "fa_icon": "fas fa-exclamation-triangle",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed - ONLY sent if the pipeline does not exit successfully.",
+                    "hidden": true
+                },
+                "plaintext_email": {
+                    "type": "boolean",
+                    "description": "Send plain-text email instead of HTML.",
+                    "fa_icon": "fas fa-remove-format",
+                    "hidden": true
+                },
+                "max_multiqc_email_size": {
+                    "type": "string",
+                    "description": "File size limit when attaching MultiQC reports to summary emails.",
+                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
+                    "default": "25.MB",
+                    "fa_icon": "fas fa-file-upload",
+                    "hidden": true
+                },
+                "monochrome_logs": {
+                    "type": "boolean",
+                    "description": "Do not use coloured log outputs.",
+                    "fa_icon": "fas fa-palette",
+                    "hidden": true
+                },
+                "hook_url": {
+                    "type": "string",
+                    "description": "Incoming hook URL for messaging service",
+                    "fa_icon": "fas fa-people-group",
+                    "help_text": "Incoming hook URL for messaging service. Currently, MS Teams and Slack are supported.",
+                    "hidden": true
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Custom config file to supply to MultiQC.",
+                    "fa_icon": "fas fa-cog",
+                    "hidden": true
+                },
+                "multiqc_logo": {
+                    "type": "string",
+                    "description": "Custom logo file to supply to MultiQC. File name must also be set in the MultiQC config file",
+                    "fa_icon": "fas fa-image",
+                    "hidden": true
+                },
+                "multiqc_methods_description": {
+                    "type": "string",
+                    "description": "Custom MultiQC yaml file containing HTML including a methods description.",
+                    "fa_icon": "fas fa-cog"
+                },
+                "validate_params": {
+                    "type": "boolean",
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true,
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
+                },
+                "pipelines_testdata_base_path": {
+                    "type": "string",
+                    "fa_icon": "far fa-check-circle",
+                    "description": "Base URL or local path to location of pipeline test dataset files",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
+                    "hidden": true
+                },
+                "modules_testdata_base_path": {
+                    "type": "string",
+                    "fa_icon": "far fa-check-circle",
+                    "description": "Base URL or local path to location of module test dataset files",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/",
+                    "hidden": true
+                },
+                "trace_report_suffix": {
+                    "type": "string",
+                    "fa_icon": "far calendar",
+                    "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
+                    "hidden": true
+                },
+                "help": {
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
+                    "description": "Display the help message."
+                },
+                "help_full": {
+                    "type": "boolean",
+                    "description": "Display the full detailed help message."
+                },
+                "show_hidden": {
+                    "type": "boolean",
+                    "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/reference_genome_options"
+        },
+        {
+            "$ref": "#/$defs/analysis_layer_toggles"
+        },
+        {
+            "$ref": "#/$defs/read_trimming_options"
+        },
+        {
+            "$ref": "#/$defs/epigenome_options"
+        },
+        {
+            "$ref": "#/$defs/variants_options"
+        },
+        {
+            "$ref": "#/$defs/cnv_options"
+        },
+        {
+            "$ref": "#/$defs/telomere_options"
+        },
+        {
+            "$ref": "#/$defs/mito_options"
+        },
+        {
+            "$ref": "#/$defs/institutional_config_options"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
+        }
+    ]
+}

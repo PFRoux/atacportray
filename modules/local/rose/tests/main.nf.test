@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process ROSE"
+    script "../main.nf"
+    process "ROSE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "rose"
+
+    test("rose - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ],
+                    file("test.narrowPeak"),
+                    file("test.bam"),
+                    file("test.bam.bai")
+                ]
+                input[1] = 'HG38'
+                input[2] = 12500
+                input[3] = 2500
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.super_enhancers }
+            )
+        }
+    }
+}

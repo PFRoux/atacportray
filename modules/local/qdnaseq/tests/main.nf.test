@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test Process QDNASEQ"
+    script "../main.nf"
+    process "QDNASEQ"
+
+    tag "modules"
+    tag "modules_local"
+    tag "qdnaseq"
+
+    test("qdnaseq - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [ [ id:'test' ], file("test.bam"), file("test.bam.bai") ]
+                input[1] = 100
+                input[2] = -0.4
+                input[3] = 0.4
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.calls }
+            )
+        }
+    }
+}

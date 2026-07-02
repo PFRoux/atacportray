@@ -1,0 +1,32 @@
+nextflow_process {
+
+    name "Test Process TOBIAS_BINDETECT"
+    script "../main.nf"
+    process "TOBIAS_BINDETECT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "tobias"
+    tag "tobias/bindetect"
+
+    test("bindetect - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [ [ id:'test' ], file("test_footprints.bw") ]
+                input[1] = file("motifs.jaspar")
+                input[2] = [ [ id:'GRCh38' ], file("genome.fasta") ]
+                input[3] = [ [ id:'consensus' ], file("consensus_peaks.bed") ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.results }
+            )
+        }
+    }
+}

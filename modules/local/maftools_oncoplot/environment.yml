@@ -1,0 +1,6 @@
+name: maftools_oncoplot
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::bioconductor-maftools=2.24.0

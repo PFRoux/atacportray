@@ -1,0 +1,80 @@
+name: "telomerehunter"
+description: Estimate telomere content and telomere-variant-repeat composition from BAM
+keywords:
+  - telomere
+  - telomerehunter
+  - telomere-content
+  - atac-seq
+tools:
+  - telomerehunter:
+      description: "Estimation of telomere content from WGS/ATAC BAM data"
+      homepage: "https://www.dkfz.de/en/applied-bioinformatics/telomerehunter/telomerehunter.html"
+      documentation: "https://pypi.org/project/telomerehunter/"
+      doi: "10.1186/s12859-019-2851-0"
+      licence: ["GPL-3.0"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: "Groovy Map containing sample information e.g. `[ id:'sample1' ]`"
+    - bam:
+        type: file
+        description: Analysis-ready BAM (indexed)
+        pattern: "*.bam"
+    - bai:
+        type: file
+        description: BAM index
+        pattern: "*.bai"
+  - - cytoband:
+        type: file
+        description: UCSC cytoBand file for the reference genome
+        pattern: "*cytoBand*"
+output:
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${meta.id}/*_summary.tsv":
+          type: file
+          description: Telomere-content summary table
+          pattern: "*_summary.tsv"
+  tvr_context:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${meta.id}/**/*_TVR_context_summary.tsv":
+          type: file
+          description: Telomere-variant-repeat context summary
+          pattern: "*_TVR_context_summary.tsv"
+  singletons:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${meta.id}/**/*_singletons.tsv":
+          type: file
+          description: Singleton TVR counts
+          pattern: "*_singletons.tsv"
+  plots:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${meta.id}/**/*.png":
+          type: file
+          description: Telomere-content and TVR plots
+          pattern: "*.png"
+  outdir:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "${meta.id}/":
+          type: directory
+          description: Full TelomereHunter output directory
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@atacportray"
+maintainers:
+  - "@atacportray"

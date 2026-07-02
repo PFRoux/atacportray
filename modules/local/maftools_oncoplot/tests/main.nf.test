@@ -1,0 +1,28 @@
+nextflow_process {
+
+    name "Test Process MAFTOOLS_ONCOPLOT"
+    script "../main.nf"
+    process "MAFTOOLS_ONCOPLOT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "maftools_oncoplot"
+
+    test("maftools_oncoplot - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [ file("s1.maf"), file("s2.maf") ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.versions).match() },
+                { assert process.out.oncoplot }
+            )
+        }
+    }
+}

@@ -1,0 +1,94 @@
+name: "qdnaseq"
+description: Shallow whole-genome sequencing copy-number profiling with QDNAseq
+keywords:
+  - cnv
+  - copy-number
+  - qdnaseq
+  - atac-seq
+tools:
+  - qdnaseq:
+      description: "Quantitative DNA sequencing for chromosomal aberrations"
+      homepage: "https://bioconductor.org/packages/QDNAseq/"
+      documentation: "https://bioconductor.org/packages/QDNAseq/"
+      doi: "10.1101/gr.175141.114"
+      licence: ["GPL-2.0-or-later"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: "Groovy Map containing sample information e.g. `[ id:'sample1' ]`"
+    - bam:
+        type: file
+        description: Analysis-ready (deduplicated) BAM
+        pattern: "*.bam"
+    - bai:
+        type: file
+        description: BAM index
+        pattern: "*.bai"
+  - binsize_kb:
+      type: integer
+      description: Bin size in kilobases (notebook default 100)
+  - loss_threshold:
+      type: number
+      description: log2 ratio threshold to call a loss (notebook -0.4)
+  - gain_threshold:
+      type: number
+      description: log2 ratio threshold to call a gain (notebook +0.4)
+output:
+  calls:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.calls.txt":
+          type: file
+          description: Per-bin gain/loss calls
+          pattern: "*.calls.txt"
+  segments:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.segments.txt":
+          type: file
+          description: Segmented copy-number values
+          pattern: "*.segments.txt"
+  copynumbers:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.copynumbers.txt":
+          type: file
+          description: Normalized per-bin copy-number values
+          pattern: "*.copynumbers.txt"
+  igv:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.igv":
+          type: file
+          description: IGV-format copy-number track
+          pattern: "*.igv"
+  plots:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.png":
+          type: file
+          description: Genome-wide copy-number profile plot
+          pattern: "*.png"
+  rds:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.rds":
+          type: file
+          description: Serialized QDNAseqCopyNumbers object
+          pattern: "*.rds"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@atacportray"
+maintainers:
+  - "@atacportray"

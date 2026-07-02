@@ -1,0 +1,14 @@
+{
+    "atacorrect - stub": {
+        "content": [
+            [
+                "versions.yml:md5,9a5edd9c3d32e593112ebc4544bea742"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.9.2",
+            "nextflow": "25.04.6"
+        },
+        "timestamp": "2026-07-01T22:09:27.516211"
+    }
+}
