@@ -356,6 +356,12 @@
                     "description": "QDNAseq bin size (kb).",
                     "fa_icon": "fas fa-ruler-horizontal"
                 },
+                "qdnaseq_bins_rds": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional QDNAseq bin annotations RDS. Use this to provide genome/build-specific bins, for example hg38.",
+                    "fa_icon": "fas fa-file"
+                },
                 "qdnaseq_loss_threshold": {
                     "type": "number",
                     "default": -0.4,

@@ -29,6 +29,9 @@ process TOBIAS_BINDETECT {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def cond   = meta.condition ? "--cond_names ${meta.condition}" : ''
     """
+    mkdir -p .matplotlib
+    export MPLCONFIGDIR="\${PWD}/.matplotlib"
+
     TOBIAS BINDetect \\
         --motifs $motifs \\
         --signals $footprints \\
@@ -41,7 +44,7 @@ process TOBIAS_BINDETECT {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        tobias: \$(TOBIAS --version 2>&1 | sed 's/TOBIAS //g')
+        tobias: "\$(TOBIAS --version 2>&1 | tail -n 1 | sed 's/TOBIAS //g')"
     END_VERSIONS
     """
 

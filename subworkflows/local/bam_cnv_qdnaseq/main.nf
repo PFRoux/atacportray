@@ -10,13 +10,14 @@ workflow BAM_CNV_QDNASEQ {
     take:
     ch_bam        // channel: [ val(meta), path(bam), path(bai) ]
     binsize_kb    // value:   100
+    bins_rds      // channel: path(QDNAseq bin annotations RDS) or []
     loss_threshold// value:   -0.4
     gain_threshold// value:   0.4
 
     main:
     ch_versions = Channel.empty()
 
-    QDNASEQ ( ch_bam, binsize_kb, loss_threshold, gain_threshold )
+    QDNASEQ ( ch_bam, binsize_kb, bins_rds, loss_threshold, gain_threshold )
     ch_versions = ch_versions.mix(QDNASEQ.out.versions)
 
     emit:

@@ -25,6 +25,9 @@ process TOBIAS_ATACORRECT {
     def args   = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
+    mkdir -p .matplotlib
+    export MPLCONFIGDIR="\${PWD}/.matplotlib"
+
     TOBIAS ATACorrect \\
         --bam $bam \\
         --genome $fasta \\
@@ -36,7 +39,7 @@ process TOBIAS_ATACORRECT {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        tobias: \$(TOBIAS --version 2>&1 | sed 's/TOBIAS //g')
+        tobias: "\$(TOBIAS --version 2>&1 | tail -n 1 | sed 's/TOBIAS //g')"
     END_VERSIONS
     """
 

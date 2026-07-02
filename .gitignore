@@ -7,41 +7,4 @@ testing/
 testing*
 *.pyc
 null/
-
-# Nextflow runtime
-work/
-.nextflow/
-.nextflow.log*
-.nf-test/
-results*/
-out*/
-output*/
-
-# Large bioinformatics files
-*.fastq
-*.fastq.gz
-*.fq
-*.fq.gz
-*.bam
-*.bai
-*.cram
-*.crai
-*.vcf
-*.vcf.gz
-*.bcf
-*.maf
-*.bigWig
-*.bw
-*.bedGraph
-*.fa
-*.fasta
-*.fa.gz
-*.fasta.gz
-*.bt2
-*.bt2l
-*.dict
-*.fai
-
-# macOS
-.DS_Store
-._*
+.lineage/

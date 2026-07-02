@@ -1,5 +1,3 @@
 sample,fastq_1,fastq_2,condition,patient
-IC_High_R1,/path/to/fastq/IC_High_R1_R1.fastq.gz,/path/to/fastq/IC_High_R1_R2.fastq.gz,IC_High,P01
-IC_High_R2,/path/to/fastq/IC_High_R2_R1.fastq.gz,/path/to/fastq/IC_High_R2_R2.fastq.gz,IC_High,P02
-IC_Low_R1,/path/to/fastq/IC_Low_R1_R1.fastq.gz,/path/to/fastq/IC_Low_R1_R2.fastq.gz,IC_Low,P03
-IC_Low_R2,/path/to/fastq/IC_Low_R2_R1.fastq.gz,/path/to/fastq/IC_Low_R2_R2.fastq.gz,IC_Low,P04
+S1,/Users/pef/Dev/atacportray/assets/S1R1.fastq.gz,/Users/pef/Dev/atacportray/assets/S1R2.fastq.gz,High,P1
+S2,/Users/pef/Dev/atacportray/assets/S2R1.fastq.gz,/Users/pef/Dev/atacportray/assets/S2R2.fastq.gz,Low,P2

@@ -1,6 +1,6 @@
 repository_type: pipeline
 
-nf_core_version: 3.5.0
+nf_core_version: 4.0.2
 
 lint:
   files_unchanged:
@@ -29,6 +29,9 @@ lint:
     - .github/ISSUE_TEMPLATE/config.yml
     - .github/workflows/awstest.yml
     - .github/workflows/awsfulltest.yml
+  merge_markers:
+    - VALIDATION_REPORT.md
+    - modules/nf-core/bowtie2/align/tests/main.nf.test.snap
 
 template:
   org: atacportray

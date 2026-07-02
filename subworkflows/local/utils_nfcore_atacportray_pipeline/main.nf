@@ -11,7 +11,6 @@
 include { UTILS_NFSCHEMA_PLUGIN     } from '../../nf-core/utils_nfschema_plugin'
 include { paramsSummaryMap          } from 'plugin/nf-schema'
 include { samplesheetToList         } from 'plugin/nf-schema'
-include { paramsHelp                } from 'plugin/nf-schema'
 include { completionEmail           } from '../../nf-core/utils_nfcore_pipeline'
 include { completionSummary         } from '../../nf-core/utils_nfcore_pipeline'
 include { imNotification            } from '../../nf-core/utils_nfcore_pipeline'
@@ -68,11 +67,14 @@ workflow PIPELINE_INITIALISATION {
         command
     )
 
+    validateAtacportrayParams()
+
     //
     // Check config provided to the pipeline
     //
+    cleaned_nextflow_cli_args = nextflow_cli_args instanceof List ? nextflow_cli_args.findAll { arg -> arg != true && arg?.toString() != 'true' } : []
     UTILS_NFCORE_PIPELINE (
-        nextflow_cli_args
+        cleaned_nextflow_cli_args
     )
 
     //
@@ -172,6 +174,28 @@ def validateInputSamplesheet(input) {
 
     return [ metas[0], fastqs ]
 }
+
+def validateAtacportrayParams() {
+    if ((params.run_cnv || params.run_telomere || params.run_mito) && !params.run_variants) {
+        error("Please enable --run_variants when using --run_cnv, --run_telomere or --run_mito because these branches require the shared analysis-ready BAM.")
+    }
+    if (params.run_telomere && !params.cytoband) {
+        error("Please provide --cytoband when using --run_telomere.")
+    }
+    if (params.run_footprinting && !params.tobias_motifs) {
+        error("Please provide --tobias_motifs when using --run_footprinting, or disable it with --run_footprinting false.")
+    }
+    if (params.run_variants && !params.skip_bqsr && (!params.known_sites || !params.known_sites_tbi)) {
+        error("Please provide --known_sites and --known_sites_tbi for BQSR, or disable BQSR with --skip_bqsr true.")
+    }
+    if (params.run_variants && !params.skip_annotation && !params.vep_cache) {
+        error("Please provide --vep_cache for VEP annotation, or disable it with --skip_annotation true.")
+    }
+    if (params.run_variants && params.skip_annotation && params.run_oncoplot) {
+        error("Please disable --run_oncoplot when using --skip_annotation true.")
+    }
+}
+
 //
 // Generate methods description for MultiQC
 //

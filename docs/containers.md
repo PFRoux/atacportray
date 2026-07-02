@@ -46,6 +46,21 @@ Nextflow can pull it without credentials on any machine.
 > On Apple Silicon the `--platform=linux/amd64` flag is required (both tools
 > depend on amd64-only conda packages); Docker runs them under emulation.
 
+## Build notes
+
+**NucleoATAC — console-script patch.** The Python-3.11 fork (PR #99) declares
+console scripts `nucleoatac.cli:main` and `pyatac.cli:main`, but neither
+`cli.py` defines a `main()` function — they expose `<pkg>_parser()` and
+`<pkg>_main(args)` instead. Installed unmodified, both CLIs abort on the first
+call with `ImportError: cannot import name 'main'`. The Dockerfile therefore
+clones the fork at the pinned SHA, appends a small `main()` wrapper
+(`parser → parse_args → dispatch`) to each `cli.py`, and installs from the
+patched tree. This was verified locally: the two Cython extensions
+(`pyatac.fragments`, `nucleoatac.multinomial_cov`) compile cleanly under Python
+3.11, and after the patch `nucleoatac --version`, `pyatac --version`, and
+`nucleoatac run --help` all work — the `run` arg surface
+(`--bed --bam --fasta --out --cores`) matches the module's invocation.
+
 ## Singularity / Apptainer
 
 The module container directives already provide `oras://ghcr.io/...` addresses

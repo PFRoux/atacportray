@@ -48,7 +48,6 @@ workflow ATACPORTRAY {
     //
     ch_fasta_raw = channel.fromPath(params.fasta, checkIfExists: true)
         .map { fa -> [ [id:'genome'], fa ] }
-        .collect()
 
     // Decompress FASTA if gzipped
     ch_fasta_branch = ch_fasta_raw.branch { meta, fa ->
@@ -61,20 +60,20 @@ workflow ATACPORTRAY {
     // FASTA index (.fai) + chrom sizes
     if ( params.fasta_fai ) {
         ch_fai = channel.fromPath(params.fasta_fai, checkIfExists: true)
-            .map { f -> [ [id:'genome'], f ] }.collect()
+            .map { f -> [ [id:'genome'], f ] }
     } else {
         SAMTOOLS_FAIDX ( ch_fasta.map { m, f -> [ m, f, [] ] }, false )
-        ch_fai = SAMTOOLS_FAIDX.out.fai.collect()
+        ch_fai = SAMTOOLS_FAIDX.out.fai
     }
 
     // Bowtie2 index (epigenome)
     if ( params.run_epigenome ) {
         if ( params.bowtie2_index ) {
             ch_bowtie2_index = channel.fromPath(params.bowtie2_index, checkIfExists: true)
-                .map { d -> [ [id:'genome'], d ] }.collect()
+                .map { d -> [ [id:'genome'], d ] }
         } else {
             BOWTIE2_BUILD ( ch_fasta )
-            ch_bowtie2_index = BOWTIE2_BUILD.out.index.collect()
+            ch_bowtie2_index = BOWTIE2_BUILD.out.index
         }
     } else {
         ch_bowtie2_index = channel.value([[:], []])
@@ -85,17 +84,17 @@ workflow ATACPORTRAY {
     if ( params.run_variants ) {
         if ( params.bwa_index ) {
             ch_bwa_index = channel.fromPath(params.bwa_index, checkIfExists: true)
-                .map { d -> [ [id:'genome'], d ] }.collect()
+                .map { d -> [ [id:'genome'], d ] }
         } else {
             BWA_INDEX ( ch_fasta )
-            ch_bwa_index = BWA_INDEX.out.index.collect()
+            ch_bwa_index = BWA_INDEX.out.index
         }
         if ( params.dict ) {
             ch_dict = channel.fromPath(params.dict, checkIfExists: true)
-                .map { f -> [ [id:'genome'], f ] }.collect()
+                .map { f -> [ [id:'genome'], f ] }
         } else {
             GATK4_CREATESEQUENCEDICTIONARY ( ch_fasta )
-            ch_dict = GATK4_CREATESEQUENCEDICTIONARY.out.dict.collect()
+            ch_dict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
         }
     } else {
         ch_bwa_index = channel.value([[:], []])
@@ -103,22 +102,25 @@ workflow ATACPORTRAY {
 
     // Blacklist / motifs / known-sites / cytoBand / VEP cache
     ch_blacklist = params.blacklist ?
-        channel.fromPath(params.blacklist, checkIfExists: true).map { f -> [ [id:'blacklist'], f ] }.collect() :
+        channel.fromPath(params.blacklist, checkIfExists: true).map { f -> [ [id:'blacklist'], f ] } :
         channel.value([[:], []])
     ch_motifs = params.tobias_motifs ?
         channel.fromPath(params.tobias_motifs, checkIfExists: true).collect() :
         channel.value([])
     ch_known_sites = params.known_sites ?
-        channel.fromPath(params.known_sites, checkIfExists: true).map { f -> [ [id:'known'], f ] }.collect() :
+        channel.fromPath(params.known_sites, checkIfExists: true).map { f -> [ [id:'known'], f ] } :
         channel.value([[:], []])
     ch_known_sites_tbi = params.known_sites_tbi ?
-        channel.fromPath(params.known_sites_tbi, checkIfExists: true).map { f -> [ [id:'known'], f ] }.collect() :
+        channel.fromPath(params.known_sites_tbi, checkIfExists: true).map { f -> [ [id:'known'], f ] } :
         channel.value([[:], []])
     ch_cytoband = params.cytoband ?
         channel.fromPath(params.cytoband, checkIfExists: true).collect() :
         channel.value([])
+    ch_qdnaseq_bins_rds = params.qdnaseq_bins_rds ?
+        channel.fromPath(params.qdnaseq_bins_rds, checkIfExists: true).collect() :
+        channel.value([])
     ch_vep_cache = params.vep_cache ?
-        channel.fromPath(params.vep_cache, checkIfExists: true).map { c -> [ [id:'vep'], c ] }.collect() :
+        channel.fromPath(params.vep_cache, checkIfExists: true).map { c -> [ [id:'vep'], c ] } :
         channel.value([[:], []])
 
     //
@@ -176,6 +178,8 @@ workflow ATACPORTRAY {
             ch_known_sites,
             ch_known_sites_tbi,
             ch_vep_cache,
+            params.skip_bqsr,
+            params.skip_annotation,
             params.vep_genome,
             params.vep_species,
             params.vep_cache_version,
@@ -190,22 +194,23 @@ workflow ATACPORTRAY {
     // CNV / TELOMERE / MITO branches (consume the shared analysis-ready BAM).
     // Require run_variants = true so the analysis-ready BAM exists.
     //
-    if ( params.run_cnv ) {
+    if ( params.run_cnv && params.run_variants ) {
         BAM_CNV_QDNASEQ (
             ch_analysis_bam,
             params.qdnaseq_binsize,
+            ch_qdnaseq_bins_rds,
             params.qdnaseq_loss_threshold,
             params.qdnaseq_gain_threshold
         )
         ch_versions = ch_versions.mix(BAM_CNV_QDNASEQ.out.versions)
     }
 
-    if ( params.run_telomere ) {
+    if ( params.run_telomere && params.run_variants ) {
         BAM_TELOMERE_TELOMEREHUNTER ( ch_analysis_bam, ch_cytoband )
         ch_versions = ch_versions.mix(BAM_TELOMERE_TELOMEREHUNTER.out.versions)
     }
 
-    if ( params.run_mito ) {
+    if ( params.run_mito && params.run_variants ) {
         BAM_MITO_MGATK ( ch_analysis_bam, params.mito_contig, params.mgatk_keep_duplicates )
         ch_versions = ch_versions.mix(BAM_MITO_MGATK.out.versions)
     }

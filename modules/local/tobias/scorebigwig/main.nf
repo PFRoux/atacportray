@@ -21,6 +21,9 @@ process TOBIAS_SCOREBIGWIG {
     def args   = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
+    mkdir -p .matplotlib
+    export MPLCONFIGDIR="\${PWD}/.matplotlib"
+
     TOBIAS ScoreBigwig \\
         --signal $corrected \\
         --regions $peaks \\
@@ -30,7 +33,7 @@ process TOBIAS_SCOREBIGWIG {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        tobias: \$(TOBIAS --version 2>&1 | sed 's/TOBIAS //g')
+        tobias: "\$(TOBIAS --version 2>&1 | tail -n 1 | sed 's/TOBIAS //g')"
     END_VERSIONS
     """
 

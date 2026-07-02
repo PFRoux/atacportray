@@ -28,6 +28,8 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     ch_known_sites   // channel: [ val(meta5), path(vcf) ]
     ch_known_sites_tbi // channel: [ val(meta6), path(tbi) ]
     ch_vep_cache     // channel: [ val(meta7), path(cache) ]
+    skip_bqsr        // value:   boolean
+    skip_annotation  // value:   boolean
     vep_genome       // value:   'GRCh38'
     vep_species      // value:   'homo_sapiens'
     vep_cache_version// value:   113
@@ -37,6 +39,7 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     main:
     ch_versions   = Channel.empty()
     ch_vcfs       = Channel.empty()
+    ch_mafs       = Channel.empty()
 
     //
     // Align with BWA-MEM (sort_bam = true)
@@ -55,27 +58,31 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     //
     // Base Quality Score Recalibration
     //
-    ch_bqsr_in = GATK4_MARKDUPLICATES.out.bam
-        .join( GATK4_MARKDUPLICATES.out.bai )
-        .map { meta, bam, bai -> [ meta, bam, bai, [] ] }
-    GATK4_BASERECALIBRATOR (
-        ch_bqsr_in, ch_fasta, ch_fai, ch_dict, ch_known_sites, ch_known_sites_tbi
-    )
+    if ( skip_bqsr ) {
+        ch_analysis_bam = GATK4_MARKDUPLICATES.out.bam.join( GATK4_MARKDUPLICATES.out.bai )
+    } else {
+        ch_bqsr_in = GATK4_MARKDUPLICATES.out.bam
+            .join( GATK4_MARKDUPLICATES.out.bai )
+            .map { meta, bam, bai -> [ meta, bam, bai, [] ] }
+        GATK4_BASERECALIBRATOR (
+            ch_bqsr_in, ch_fasta, ch_fai, ch_dict, ch_known_sites, ch_known_sites_tbi
+        )
 
-    ch_applybqsr_in = GATK4_MARKDUPLICATES.out.bam
-        .join( GATK4_MARKDUPLICATES.out.bai )
-        .join( GATK4_BASERECALIBRATOR.out.table )
-        .map { meta, bam, bai, table -> [ meta, bam, bai, table, [] ] }
-    GATK4_APPLYBQSR (
-        ch_applybqsr_in,
-        ch_fasta.map { m, f -> f },
-        ch_fai.map   { m, f -> f },
-        ch_dict.map  { m, f -> f }
-    )
+        ch_applybqsr_in = GATK4_MARKDUPLICATES.out.bam
+            .join( GATK4_MARKDUPLICATES.out.bai )
+            .join( GATK4_BASERECALIBRATOR.out.table )
+            .map { meta, bam, bai, table -> [ meta, bam, bai, table, [] ] }
+        GATK4_APPLYBQSR (
+            ch_applybqsr_in,
+            ch_fasta.map { m, f -> f },
+            ch_fai.map   { m, f -> f },
+            ch_dict.map  { m, f -> f }
+        )
 
-    // Analysis-ready BAM (shared with CNV / telomere / mito branches)
-    INDEX_ANALYSIS ( GATK4_APPLYBQSR.out.bam )
-    ch_analysis_bam = GATK4_APPLYBQSR.out.bam.join( INDEX_ANALYSIS.out.index )
+        // Analysis-ready BAM (shared with CNV / telomere / mito branches)
+        INDEX_ANALYSIS ( GATK4_APPLYBQSR.out.bam )
+        ch_analysis_bam = GATK4_APPLYBQSR.out.bam.join( INDEX_ANALYSIS.out.index )
+    }
 
     //
     // Multi-caller variant calling
@@ -125,27 +132,30 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     //
     // Annotate with VEP
     //
-    ch_vep_in = ch_vcfs.map { meta, vcf -> [ meta, vcf, [] ] }
-    ENSEMBLVEP_VEP (
-        ch_vep_in, vep_genome, vep_species, vep_cache_version, ch_vep_cache, ch_fasta, []
-    )
+    if ( !skip_annotation ) {
+        ch_vep_in = ch_vcfs.map { meta, vcf -> [ meta, vcf, [] ] }
+        ENSEMBLVEP_VEP (
+            ch_vep_in, vep_genome, vep_species, vep_cache_version, ch_vep_cache, ch_fasta, []
+        )
 
-    //
-    // Convert to MAF (vcf2maf)
-    //
-    VCF2MAF (
-        ENSEMBLVEP_VEP.out.vcf,
-        ch_fasta.map { m, f -> f },
-        ch_vep_cache.map { m, c -> c }
-    )
-    ch_versions = ch_versions.mix(VCF2MAF.out.versions)
+        //
+        // Convert to MAF (vcf2maf)
+        //
+        VCF2MAF (
+            ENSEMBLVEP_VEP.out.vcf,
+            ch_fasta.map { m, f -> f },
+            ch_vep_cache.map { m, c -> c }
+        )
+        ch_mafs = VCF2MAF.out.maf
+        ch_versions = ch_versions.mix(VCF2MAF.out.versions)
+    }
 
     //
     // Cohort oncoplot (maftools)
     //
     ch_oncoplot = Channel.empty()
-    if ( run_oncoplot ) {
-        MAFTOOLS_ONCOPLOT ( VCF2MAF.out.maf.collect { it[1] } )
+    if ( run_oncoplot && !skip_annotation ) {
+        MAFTOOLS_ONCOPLOT ( ch_mafs.collect { it[1] } )
         ch_oncoplot = MAFTOOLS_ONCOPLOT.out.oncoplot
         ch_versions = ch_versions.mix(MAFTOOLS_ONCOPLOT.out.versions)
     }
@@ -153,7 +163,7 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     emit:
     bam            = ch_analysis_bam    // channel: [ meta, bam, bai ] (shared analysis-ready BAM)
     vcf            = ch_vcfs            // channel: [ meta(+caller), vcf ]
-    maf            = VCF2MAF.out.maf    // channel: [ meta, maf ]
+    maf            = ch_mafs            // channel: [ meta, maf ]
     oncoplot       = ch_oncoplot        // channel: [ *.oncoplot.pdf ]
     versions       = ch_versions
 }

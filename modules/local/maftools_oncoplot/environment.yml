@@ -3,4 +3,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - bioconda::bioconductor-maftools=2.24.0
+  - bioconda::bioconductor-maftools=2.26.0

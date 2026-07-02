@@ -10,6 +10,7 @@ process QDNASEQ {
     input:
     tuple val(meta), path(bam), path(bai)
     val   binsize_kb
+    path  bins_rds
     val   loss_threshold
     val   gain_threshold
 
@@ -28,11 +29,13 @@ process QDNASEQ {
     script:
     def args   = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def bins   = bins_rds ? "--bins_rds $bins_rds" : ""
     """
     qdnaseq.R \\
         --bam $bam \\
         --sample $prefix \\
         --binsize $binsize_kb \\
+        $bins \\
         --loss $loss_threshold \\
         --gain $gain_threshold \\
         $args

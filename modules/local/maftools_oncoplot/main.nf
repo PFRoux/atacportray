@@ -4,8 +4,8 @@ process MAFTOOLS_ONCOPLOT {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bioconductor-maftools:2.24.0--r44hf17d9f6_0' :
-        'quay.io/biocontainers/bioconductor-maftools:2.24.0--r44hf17d9f6_0' }"
+        'https://depot.galaxyproject.org/singularity/bioconductor-maftools:2.26.0--r45h01b2380_0' :
+        'quay.io/biocontainers/bioconductor-maftools:2.26.0--r45h01b2380_0' }"
 
     input:
     path mafs, stageAs: "mafs/*"
@@ -41,7 +41,7 @@ process MAFTOOLS_ONCOPLOT {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         r-base: 4.4.0
-        maftools: 2.24.0
+        maftools: 2.26.0
     END_VERSIONS
     """
 }
