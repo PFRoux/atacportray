@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "PIPELINE_INITIALISATION"
+description: Pipeline-specific initialisation and validation utilities for atacportray
+keywords:
+  - utility
+  - validation
+  - pipeline
+components:
+  - utils_nfschema_plugin
+  - utils_nfcore_pipeline
+  - utils_nextflow_pipeline
+  - completionemail
+  - completionsummary
+  - imnotification
+input:
+  - input:
+      type: file
+      description: Input samplesheet path
+  - outdir:
+      type: directory
+      description: Output directory
+output:
+  - samplesheet:
+      type: file
+      description: Parsed and validated samplesheet channel
+  - versions:
+      type: file
+      description: Software versions file
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

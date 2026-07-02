@@ -1,8 +1,8 @@
 # atacportray — Lint & Stub Validation Report
 
 Pipeline: **atacportray/atacportray** v1.0.0dev
-Template: nf-core tools 3.5.0 (`is_nfcore: false`, standalone)
-Validation host: macOS, no container engine (stub mode)
+Template: nf-core tools 4.0.2 (`is_nfcore: false`, standalone)
+Validation host: macOS with Docker Desktop for local integration checks
 
 ## Component inventory
 
@@ -15,31 +15,21 @@ Validation host: macOS, no container engine (stub mode)
 
 ## `nf-core pipelines lint` (pipeline-level tests)
 
-Run via the Python lint API (the CLI's module-lint step requires cloning
-`github.com/nf-core/modules.git`, which the validation sandbox cannot do —
-git cannot create `.git` directories here). 26 of 27 pipeline-level tests
-executed; `actions_schema_validation` needs network to the GitHub schema and
-was skipped.
+Run with:
 
-**Result: 193 PASS · 10 WARN · 4 FAIL**
+```bash
+nf-core pipelines lint
+```
 
-### The 4 FAILs are false positives (one upstream file)
+Current status after the latest cleanup pass:
 
-All four are `merge_markers` hits on
-`modules/nf-core/bowtie2/align/tests/main.nf.test.snap`. The flagged
-`<<<<<<<` strings are **FASTQ base-quality characters inside a SAM record**
-(`AEEAA<<<AAAE/E/AA<<<<<<<<...`), not git conflict markers. This is an
-upstream nf-core module test-snapshot, unmodified by this pipeline, and the
-`merge_markers` heuristic misfires on quality strings. No action required.
+**Result: 445 PASS · 23 IGNORED · 40 WARN · 0 FAIL**
 
-### The 10 WARNs are cosmetic template placeholders
+Remaining warnings are tracked cleanup items:
 
-- 1 × `readme`: `zenodo.XXXXXXX` DOI placeholder — resolved after first Zenodo release.
-- 9 × `pipeline_todos`: standard nf-core template `TODO nf-core:` comments in
-  `base.config`, `nextflow.config`, `main.nf`, `tests/nextflow.config` and
-  `methods_description_template.yml` (e.g. "Check the defaults for all
-  processes", "Specify any additional parameters here"). These are inert
-  guidance comments carried by every generated nf-core pipeline.
+- `readme`: `zenodo.XXXXXXX` DOI placeholder, expected until the first Zenodo release.
+- registry module/subworkflow version warnings, to be handled by a controlled `nf-core modules update` pass.
+- local single-module wrapper subworkflows, kept intentionally for branch-level structure and output naming.
 
 ## Stub run — wiring validation
 
@@ -96,7 +86,5 @@ nextflow run . -profile test_full  --input <ss.csv> --fasta <genome.fa> --outdir
 nf-test test modules/local/
 ```
 
-> On a container-capable Linux host with network, run the full
-> `nf-core pipelines lint` and `-profile test,docker` (non-stub) for
-> real-data validation; the module-lint step and `actions_schema_validation`
-> will then execute too.
+> On Genotoul, use the institutional `-profile genotoul` with a fresh work
+> directory and real ATAC-seq data for production-scale validation.

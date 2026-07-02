@@ -162,4 +162,4 @@ If you update images or graphics, follow the nf-core [style guidelines](https://
 
 ## Pipeline specific contribution guidelines
 
-<!-- TODO nf-core: Add any pipeline specific contribution guidelines here, such as coding styles, procedures, checklists etc. -->
+For atacportray-specific changes, keep local modules and subworkflows covered by nf-test where practical, update `nextflow_schema.json` when adding or changing parameters, and run `nf-core pipelines lint` before opening a pull request. Changes that affect optional branches should document the required reference assets in `docs/usage.md` and `docs/output.md`.

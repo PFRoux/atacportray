@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "BAM_CNV_QDNASEQ"
+description: Run QDNAseq copy-number profiling on analysis-ready ATAC-seq BAM files
+keywords:
+  - cnv
+  - qdnaseq
+  - atac-seq
+components:
+  - qdnaseq
+input:
+  - ch_bam:
+      type: file
+      description: Channel containing metadata, BAM and BAM index
+  - binsize_kb:
+      type: integer
+      description: QDNAseq bin size in kilobases
+  - bins_rds:
+      type: file
+      description: Optional QDNAseq bin annotation RDS
+  - loss_threshold:
+      type: number
+      description: Log2 threshold used to call copy-number losses
+  - gain_threshold:
+      type: number
+      description: Log2 threshold used to call copy-number gains
+output:
+  - calls:
+      type: file
+      description: QDNAseq copy-number calls
+  - segments:
+      type: file
+      description: Segmented copy-number table
+  - plots:
+      type: file
+      description: QDNAseq summary plots
+  - versions:
+      type: file
+      description: Software versions file
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

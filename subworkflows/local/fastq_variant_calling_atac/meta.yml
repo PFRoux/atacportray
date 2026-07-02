@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "FASTQ_VARIANT_CALLING_ATAC"
+description: Align ATAC-seq FASTQ files with BWA-MEM and run optional short-variant analysis
+keywords:
+  - atac-seq
+  - variants
+  - bwa
+  - gatk
+components:
+  - bwa/mem
+  - gatk4/markduplicates
+  - gatk4/baserecalibrator
+  - gatk4/applybqsr
+  - gatk4/haplotypecaller
+  - deepvariant/rundeepvariant
+  - freebayes
+  - bcftools/mpileup
+  - samtools/index
+  - ensemblvep/vep
+  - vcf2maf
+  - maftools/oncoplot
+input:
+  - ch_reads:
+      type: file
+      description: Channel containing metadata and paired-end FASTQ files
+  - ch_bwa_index:
+      type: directory
+      description: BWA index directory
+  - ch_fasta:
+      type: file
+      description: Reference genome FASTA
+  - ch_fai:
+      type: file
+      description: FASTA index
+  - ch_dict:
+      type: file
+      description: GATK sequence dictionary
+output:
+  - bam:
+      type: file
+      description: Shared analysis-ready BAM and index
+  - vcf:
+      type: file
+      description: Variant call files
+  - maf:
+      type: file
+      description: Optional MAF files
+  - oncoplot:
+      type: file
+      description: Optional maftools oncoplot
+  - versions:
+      type: file
+      description: Software versions file
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "BAM_TELOMERE_TELOMEREHUNTER"
+description: Run TelomereHunter telomere-content estimation on analysis-ready ATAC-seq BAM files
+keywords:
+  - telomere
+  - telomerehunter
+  - atac-seq
+components:
+  - telomerehunter
+input:
+  - ch_bam:
+      type: file
+      description: Channel containing metadata, BAM and BAM index
+  - ch_cytoband:
+      type: file
+      description: UCSC cytoBand annotation file
+output:
+  - summary:
+      type: file
+      description: TelomereHunter summary table
+  - outdir:
+      type: directory
+      description: TelomereHunter output directory
+  - plots:
+      type: file
+      description: TelomereHunter plots and auxiliary tables
+  - versions:
+      type: file
+      description: Software versions file
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

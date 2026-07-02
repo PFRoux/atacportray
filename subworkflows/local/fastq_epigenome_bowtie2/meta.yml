@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "FASTQ_EPIGENOME_BOWTIE2"
+description: Align ATAC-seq FASTQ files with Bowtie2 and generate epigenome readouts
+keywords:
+  - atac-seq
+  - bowtie2
+  - peaks
+  - footprinting
+components:
+  - bowtie2/align
+  - samtools/view
+  - bedtools/intersect
+  - samtools/sort
+  - samtools/index
+  - deeptools/bamcoverage
+  - macs3/callpeak
+  - rose
+  - nucleoatac
+  - consensus/peaks
+  - tobias/atacorrect
+  - tobias/scorebigwig
+  - tobias/bindetect
+input:
+  - ch_reads:
+      type: file
+      description: Channel containing metadata and paired-end FASTQ files
+  - ch_bowtie2_index:
+      type: directory
+      description: Bowtie2 index directory
+  - ch_fasta:
+      type: file
+      description: Reference genome FASTA
+  - ch_fai:
+      type: file
+      description: FASTA index
+  - ch_blacklist:
+      type: file
+      description: Optional blacklist BED
+output:
+  - bam:
+      type: file
+      description: Sorted epigenome BAM and index
+  - bigwig:
+      type: file
+      description: Coverage bigWig files
+  - peaks:
+      type: file
+      description: MACS3 peak files
+  - super_enhancers:
+      type: file
+      description: Optional ROSE super-enhancer outputs
+  - nucleosomes:
+      type: file
+      description: Optional NucleoATAC nucleosome calls
+  - footprints:
+      type: file
+      description: Optional TOBIAS footprinting outputs
+  - multiqc_files:
+      type: file
+      description: Files collected for MultiQC
+  - versions:
+      type: file
+      description: Software versions file
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

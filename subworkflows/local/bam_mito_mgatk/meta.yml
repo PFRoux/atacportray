@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "BAM_MITO_MGATK"
+description: Run mgatk mitochondrial variant calling on analysis-ready ATAC-seq BAM files
+keywords:
+  - mitochondria
+  - mgatk
+  - heteroplasmy
+components:
+  - mgatk
+input:
+  - ch_bam:
+      type: file
+      description: Channel containing metadata, BAM and BAM index
+  - mito_contig:
+      type: string
+      description: Name of the mitochondrial contig in the reference genome
+  - keep_duplicates:
+      type: boolean
+      description: Whether duplicate reads should be retained by mgatk
+output:
+  - variant_stats:
+      type: file
+      description: mgatk variant statistics
+  - final_dir:
+      type: directory
+      description: mgatk final output directory
+  - outdir:
+      type: directory
+      description: mgatk output directory
+  - versions:
+      type: file
+      description: Software versions file
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"
