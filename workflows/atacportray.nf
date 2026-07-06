@@ -46,21 +46,20 @@ workflow ATACPORTRAY {
     //
     // Reference channels
     //
-    ch_fasta_raw = channel.fromPath(params.fasta, checkIfExists: true)
-        .map { fa -> [ [id:'genome'], fa ] }
-
-    // Decompress FASTA if gzipped
-    ch_fasta_branch = ch_fasta_raw.branch { meta, fa ->
-        gz: fa.name.endsWith('.gz')
-        plain: true
+    // Decompress FASTA if gzipped. Static reference files are value channels so
+    // that every sample can reuse them in multi-input processes.
+    if ( params.fasta.endsWith('.gz') ) {
+        ch_fasta_raw = channel.fromPath(params.fasta, checkIfExists: true)
+            .map { fa -> [ [id:'genome'], fa ] }
+        GUNZIP ( ch_fasta_raw )
+        ch_fasta = GUNZIP.out.gunzip.first()
+    } else {
+        ch_fasta = channel.value([ [id:'genome'], file(params.fasta) ])
     }
-    GUNZIP ( ch_fasta_branch.gz )
-    ch_fasta = ch_fasta_branch.plain.mix(GUNZIP.out.gunzip).first()
 
     // FASTA index (.fai) + chrom sizes
     if ( params.fasta_fai ) {
-        ch_fai = channel.fromPath(params.fasta_fai, checkIfExists: true)
-            .map { f -> [ [id:'genome'], f ] }
+        ch_fai = channel.value([ [id:'genome'], file(params.fasta_fai) ])
     } else {
         SAMTOOLS_FAIDX ( ch_fasta.map { m, f -> [ m, f, [] ] }, false )
         ch_fai = SAMTOOLS_FAIDX.out.fai
@@ -69,8 +68,7 @@ workflow ATACPORTRAY {
     // Bowtie2 index (epigenome)
     if ( params.run_epigenome ) {
         if ( params.bowtie2_index ) {
-            ch_bowtie2_index = channel.fromPath(params.bowtie2_index, checkIfExists: true)
-                .map { d -> [ [id:'genome'], d ] }
+            ch_bowtie2_index = channel.value([ [id:'genome'], file(params.bowtie2_index) ])
         } else {
             BOWTIE2_BUILD ( ch_fasta )
             ch_bowtie2_index = BOWTIE2_BUILD.out.index
@@ -83,15 +81,13 @@ workflow ATACPORTRAY {
     ch_dict = channel.value([[:], []])
     if ( params.run_variants ) {
         if ( params.bwa_index ) {
-            ch_bwa_index = channel.fromPath(params.bwa_index, checkIfExists: true)
-                .map { d -> [ [id:'genome'], d ] }
+            ch_bwa_index = channel.value([ [id:'genome'], file(params.bwa_index) ])
         } else {
             BWA_INDEX ( ch_fasta )
             ch_bwa_index = BWA_INDEX.out.index
         }
         if ( params.dict ) {
-            ch_dict = channel.fromPath(params.dict, checkIfExists: true)
-                .map { f -> [ [id:'genome'], f ] }
+            ch_dict = channel.value([ [id:'genome'], file(params.dict) ])
         } else {
             GATK4_CREATESEQUENCEDICTIONARY ( ch_fasta )
             ch_dict = GATK4_CREATESEQUENCEDICTIONARY.out.dict
