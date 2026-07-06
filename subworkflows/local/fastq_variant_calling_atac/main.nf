@@ -12,6 +12,7 @@ include { GATK4_HAPLOTYPECALLER      } from '../../../modules/nf-core/gatk4/hapl
 include { DEEPVARIANT_RUNDEEPVARIANT } from '../../../modules/nf-core/deepvariant/rundeepvariant/main'
 include { FREEBAYES                  } from '../../../modules/nf-core/freebayes/main'
 include { BCFTOOLS_MPILEUP           } from '../../../modules/nf-core/bcftools/mpileup/main'
+include { SAMTOOLS_INDEX as INDEX_MARKDUP } from '../../../modules/nf-core/samtools/index/main'
 include { SAMTOOLS_INDEX as INDEX_ANALYSIS } from '../../../modules/nf-core/samtools/index/main'
 include { ENSEMBLVEP_VEP             } from '../../../modules/nf-core/ensemblvep/vep/main'
 include { VCF2MAF                    } from '../../../modules/nf-core/vcf2maf/main'
@@ -54,22 +55,22 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
         ch_fasta.map { m, f -> f },
         ch_fai.map   { m, f -> f }
     )
+    INDEX_MARKDUP ( GATK4_MARKDUPLICATES.out.bam )
+    ch_markdup_bam = GATK4_MARKDUPLICATES.out.bam.join( INDEX_MARKDUP.out.index )
 
     //
     // Base Quality Score Recalibration
     //
     if ( skip_bqsr ) {
-        ch_analysis_bam = GATK4_MARKDUPLICATES.out.bam.join( GATK4_MARKDUPLICATES.out.bai )
+        ch_analysis_bam = ch_markdup_bam
     } else {
-        ch_bqsr_in = GATK4_MARKDUPLICATES.out.bam
-            .join( GATK4_MARKDUPLICATES.out.bai )
+        ch_bqsr_in = ch_markdup_bam
             .map { meta, bam, bai -> [ meta, bam, bai, [] ] }
         GATK4_BASERECALIBRATOR (
             ch_bqsr_in, ch_fasta, ch_fai, ch_dict, ch_known_sites, ch_known_sites_tbi
         )
 
-        ch_applybqsr_in = GATK4_MARKDUPLICATES.out.bam
-            .join( GATK4_MARKDUPLICATES.out.bai )
+        ch_applybqsr_in = ch_markdup_bam
             .join( GATK4_BASERECALIBRATOR.out.table )
             .map { meta, bam, bai, table -> [ meta, bam, bai, table, [] ] }
         GATK4_APPLYBQSR (
