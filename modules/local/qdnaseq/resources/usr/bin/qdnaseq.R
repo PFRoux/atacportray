@@ -7,19 +7,43 @@
 
 suppressMessages({
   library(QDNAseq)
-  library(optparse)
 })
 
-opt_list <- list(
-  make_option("--bam", type="character"),
-  make_option("--sample", type="character", default="sample"),
-  make_option("--binsize", type="double", default=100),   # kb
-  make_option("--bins_rds", type="character", default=NULL),
-  make_option("--loss", type="double", default=-0.4),
-  make_option("--gain", type="double", default=0.4),
-  make_option("--genome", type="character", default="hg19")
-)
-opt <- parse_args(OptionParser(option_list=opt_list))
+parse_args <- function(args) {
+  opts <- list(
+    bam = NULL,
+    sample = "sample",
+    binsize = 100,
+    bins_rds = NULL,
+    loss = -0.4,
+    gain = 0.4,
+    genome = "hg19"
+  )
+
+  i <- 1
+  while (i <= length(args)) {
+    key <- sub("^--", "", args[[i]])
+    if (!key %in% names(opts)) {
+      stop("Unknown option: ", args[[i]], call. = FALSE)
+    }
+    if (i == length(args) || startsWith(args[[i + 1]], "--")) {
+      stop("Missing value for option: ", args[[i]], call. = FALSE)
+    }
+    opts[[key]] <- args[[i + 1]]
+    i <- i + 2
+  }
+
+  if (is.null(opts$bam)) {
+    stop("Missing required option: --bam", call. = FALSE)
+  }
+
+  opts$binsize <- as.numeric(opts$binsize)
+  opts$loss <- as.numeric(opts$loss)
+  opts$gain <- as.numeric(opts$gain)
+  opts
+}
+
+opt <- parse_args(commandArgs(trailingOnly = TRUE))
 
 # Bin annotations for the requested bin size (pre-packaged hg19 bins;
 # QDNAseq calls relative to bins, liftOver of segments is handled downstream if needed)
