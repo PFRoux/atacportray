@@ -98,16 +98,16 @@ workflow ATACPORTRAY {
 
     // Blacklist / motifs / known-sites / cytoBand / VEP cache
     ch_blacklist = params.blacklist ?
-        channel.fromPath(params.blacklist, checkIfExists: true).map { f -> [ [id:'blacklist'], f ] } :
+        channel.value([ [id:'blacklist'], file(params.blacklist) ]) :
         channel.value([[:], []])
     ch_motifs = params.tobias_motifs ?
         channel.fromPath(params.tobias_motifs, checkIfExists: true).collect() :
         channel.value([])
     ch_known_sites = params.known_sites ?
-        channel.fromPath(params.known_sites, checkIfExists: true).map { f -> [ [id:'known'], f ] } :
+        channel.value([ [id:'known'], file(params.known_sites) ]) :
         channel.value([[:], []])
     ch_known_sites_tbi = params.known_sites_tbi ?
-        channel.fromPath(params.known_sites_tbi, checkIfExists: true).map { f -> [ [id:'known'], f ] } :
+        channel.value([ [id:'known'], file(params.known_sites_tbi) ]) :
         channel.value([[:], []])
     ch_cytoband = params.cytoband ?
         channel.fromPath(params.cytoband, checkIfExists: true).collect() :
@@ -116,7 +116,7 @@ workflow ATACPORTRAY {
         channel.fromPath(params.qdnaseq_bins_rds, checkIfExists: true).collect() :
         channel.value([])
     ch_vep_cache = params.vep_cache ?
-        channel.fromPath(params.vep_cache, checkIfExists: true).map { c -> [ [id:'vep'], c ] } :
+        channel.value([ [id:'vep'], file(params.vep_cache) ]) :
         channel.value([[:], []])
 
     //
