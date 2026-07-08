@@ -152,8 +152,10 @@ Produced only when `--run_footprinting` is set and `--tobias_motifs` is provided
 <details markdown="1">
 <summary>Output files</summary>
 
-- `variants/calls/<caller>/`
+- `variants/vcf/<caller>/<sample>/`
   - `*.vcf.gz`, `*.vcf.gz.tbi` - Per-caller short-variant calls (DeepVariant, FreeBayes, HaplotypeCaller, bcftools)
+- `variants/vcf_in_peaks/<caller>/<sample>/`
+  - `*.vcf.gz`, `*.vcf.gz.tbi` - Per-caller calls filtered to consensus peak regions expanded by `--peak_filter_slop` when `--variants_in_peaks_only` is enabled
 
 </details>
 
@@ -177,6 +179,8 @@ Produced only when `--run_footprinting` is set and `--tobias_motifs` is provided
 - `cnv/qdnaseq/`
   - `*_copynumber.igv`, `*_calls.txt` - Binned log2 ratios and gain/loss calls
   - `*_profile.png` - Genome-wide copy-number plot
+- `cnv/outside_peaks_bam/<sample>/`
+  - `*.outside_peaks.bam`, `*.outside_peaks.bam.bai` - Analysis-ready BAM restricted to reads outside consensus peak regions when `--qdnaseq_exclude_peaks` is enabled
 
 </details>
 

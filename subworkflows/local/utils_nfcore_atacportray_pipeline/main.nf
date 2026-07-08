@@ -194,6 +194,12 @@ def validateAtacportrayParams() {
     if (params.run_variants && params.skip_annotation && params.run_oncoplot) {
         error("Please disable --run_oncoplot when using --skip_annotation true.")
     }
+    if (params.run_variants && params.variants_in_peaks_only && !params.run_epigenome) {
+        error("Please enable --run_epigenome when using --variants_in_peaks_only because consensus peaks are required.")
+    }
+    if (params.run_cnv && params.qdnaseq_exclude_peaks && !params.run_epigenome) {
+        error("Please enable --run_epigenome when using --qdnaseq_exclude_peaks because consensus peaks are required.")
+    }
 }
 
 //

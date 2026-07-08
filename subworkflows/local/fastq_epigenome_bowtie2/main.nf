@@ -16,6 +16,7 @@ include { CONSENSUS_PEAKS      } from '../../../modules/local/consensus_peaks/ma
 include { TOBIAS_ATACORRECT    } from '../../../modules/local/tobias/atacorrect/main'
 include { TOBIAS_SCOREBIGWIG   } from '../../../modules/local/tobias/scorebigwig/main'
 include { TOBIAS_BINDETECT     } from '../../../modules/local/tobias/bindetect/main'
+include { BED_SLOP             } from '../../../modules/local/bed_slop/main'
 
 workflow FASTQ_EPIGENOME_BOWTIE2 {
 
@@ -33,6 +34,7 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     rose_tss          // value:   e.g. 2500
     run_tobias        // value:   boolean
     run_nucleoatac    // value:   boolean
+    peak_filter_slop  // value:   e.g. 500
 
     main:
     ch_versions      = Channel.empty()
@@ -90,6 +92,16 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     ch_multiqc_files = ch_multiqc_files.mix(MACS3_CALLPEAK.out.xls.collect{ it[1] }.ifEmpty([]))
 
     //
+    // Consensus peak set used by footprinting, variant filtering and CNV masking
+    //
+    CONSENSUS_PEAKS ( MACS3_CALLPEAK.out.peak.collect{ it[1] } )
+    ch_consensus_peaks = CONSENSUS_PEAKS.out.bed.map { bed -> [ [id:'consensus'], bed ] }
+    BED_SLOP ( ch_consensus_peaks, ch_fai, peak_filter_slop )
+    ch_versions = ch_versions
+        .mix(CONSENSUS_PEAKS.out.versions)
+        .mix(BED_SLOP.out.versions)
+
+    //
     // Super-enhancers with ROSE (-g HG38 -s 12500 -t 2500)
     //
     ch_super_enhancers = Channel.empty()
@@ -123,16 +135,13 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     //
     ch_bindetect = Channel.empty()
     if ( run_tobias ) {
-        // Consensus peak set across all samples for TOBIAS
-        CONSENSUS_PEAKS ( MACS3_CALLPEAK.out.peak.collect{ it[1] } )
-
         ch_atac_in = ch_bam_bai
-            .combine( CONSENSUS_PEAKS.out.bed )
+            .combine( ch_consensus_peaks.map { meta, bed -> bed } )
             .map { meta, bam, bai, bed -> [ meta, bam, bai, bed ] }
         TOBIAS_ATACORRECT ( ch_atac_in, ch_fasta )
 
         ch_score_in = TOBIAS_ATACORRECT.out.corrected
-            .combine( CONSENSUS_PEAKS.out.bed )
+            .combine( ch_consensus_peaks.map { meta, bed -> bed } )
             .map { meta, bw, bed -> [ meta, bw, bed ] }
         TOBIAS_SCOREBIGWIG ( ch_score_in )
 
@@ -140,11 +149,10 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
             TOBIAS_SCOREBIGWIG.out.footprints,
             ch_motifs,
             ch_fasta,
-            CONSENSUS_PEAKS.out.bed.map { bed -> [ [id:'consensus'], bed ] }
+            ch_consensus_peaks
         )
         ch_bindetect = TOBIAS_BINDETECT.out.results
         ch_versions = ch_versions
-            .mix(CONSENSUS_PEAKS.out.versions)
             .mix(TOBIAS_ATACORRECT.out.versions)
             .mix(TOBIAS_SCOREBIGWIG.out.versions)
             .mix(TOBIAS_BINDETECT.out.versions)
@@ -154,6 +162,8 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     bam            = ch_bam_bai                    // channel: [ meta, bam, bai ]
     bigwig         = DEEPTOOLS_BAMCOVERAGE.out.bigwig
     peaks          = MACS3_CALLPEAK.out.peak
+    consensus_peaks= ch_consensus_peaks
+    peak_regions   = BED_SLOP.out.bed
     super_enhancers= ch_super_enhancers
     nucleosomes    = ch_nucleosomes
     footprints     = ch_bindetect

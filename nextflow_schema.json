@@ -278,6 +278,12 @@
                     "default": "all",
                     "description": "Strategy to build a consensus peak set across samples.",
                     "fa_icon": "fas fa-object-group"
+                },
+                "peak_filter_slop": {
+                    "type": "integer",
+                    "default": 500,
+                    "description": "Number of base pairs added on each side of consensus peaks for VCF filtering and QDNAseq peak masking.",
+                    "fa_icon": "fas fa-expand-arrows-alt"
                 }
             }
         },
@@ -294,6 +300,12 @@
                     "fa_icon": "fas fa-list",
                     "pattern": "^((deepvariant|freebayes|haplotypecaller|bcftools)(,(deepvariant|freebayes|haplotypecaller|bcftools))*)?$"
                 },
+                "deepvariant_model_type": {
+                    "type": "string",
+                    "default": "WGS",
+                    "description": "DeepVariant model_type passed to run_deepvariant.",
+                    "fa_icon": "fas fa-brain"
+                },
                 "skip_bqsr": {
                     "type": "boolean",
                     "default": false,
@@ -303,7 +315,7 @@
                 "variants_in_peaks_only": {
                     "type": "boolean",
                     "default": false,
-                    "description": "Restrict variant calling to accessible (peak) regions.",
+                    "description": "Filter final VCFs to variants located in consensus peak regions expanded by --peak_filter_slop.",
                     "fa_icon": "fas fa-crop"
                 },
                 "vep_cache": {
@@ -373,6 +385,12 @@
                     "default": 0.4,
                     "description": "log2 ratio threshold to call a gain.",
                     "fa_icon": "fas fa-arrow-up"
+                },
+                "qdnaseq_exclude_peaks": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Run QDNAseq on reads outside consensus peak regions expanded by --peak_filter_slop.",
+                    "fa_icon": "fas fa-compress-arrows-alt"
                 }
             }
         },

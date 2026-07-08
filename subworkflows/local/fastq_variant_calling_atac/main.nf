@@ -17,6 +17,7 @@ include { SAMTOOLS_INDEX as INDEX_ANALYSIS } from '../../../modules/nf-core/samt
 include { ENSEMBLVEP_VEP             } from '../../../modules/nf-core/ensemblvep/vep/main'
 include { VCF2MAF                    } from '../../../modules/nf-core/vcf2maf/main'
 include { MAFTOOLS_ONCOPLOT          } from '../../../modules/local/maftools_oncoplot/main'
+include { VCF_FILTER_REGIONS         } from '../../../modules/local/vcf_filter_regions/main'
 
 workflow FASTQ_VARIANT_CALLING_ATAC {
 
@@ -36,6 +37,8 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     vep_cache_version// value:   113
     callers          // value:   list, e.g. ['deepvariant','freebayes','haplotypecaller','bcftools']
     run_oncoplot     // value:   boolean
+    filter_vcfs_in_peaks // value: boolean
+    ch_peak_regions  // channel: [ val(meta), path(bed) ]
 
     main:
     ch_versions   = Channel.empty()
@@ -131,10 +134,24 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     }
 
     //
+    // Optional post-calling VCF restriction to consensus peak regions
+    //
+    if ( filter_vcfs_in_peaks ) {
+        ch_vcf_filter_in = ch_vcfs
+            .combine( ch_peak_regions )
+            .map { meta, vcf, peak_meta, regions -> [ meta, vcf, regions ] }
+        VCF_FILTER_REGIONS ( ch_vcf_filter_in )
+        ch_vcfs_filtered = VCF_FILTER_REGIONS.out.vcf
+        ch_versions = ch_versions.mix(VCF_FILTER_REGIONS.out.versions)
+    } else {
+        ch_vcfs_filtered = ch_vcfs
+    }
+
+    //
     // Annotate with VEP
     //
     if ( !skip_annotation ) {
-        ch_vep_in = ch_vcfs.map { meta, vcf -> [ meta, vcf, [] ] }
+        ch_vep_in = ch_vcfs_filtered.map { meta, vcf -> [ meta, vcf, [] ] }
         ENSEMBLVEP_VEP (
             ch_vep_in, vep_genome, vep_species, vep_cache_version, ch_vep_cache, ch_fasta, []
         )
@@ -163,7 +180,7 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
 
     emit:
     bam            = ch_analysis_bam    // channel: [ meta, bam, bai ] (shared analysis-ready BAM)
-    vcf            = ch_vcfs            // channel: [ meta(+caller), vcf ]
+    vcf            = ch_vcfs_filtered   // channel: [ meta(+caller), vcf ]
     maf            = ch_mafs            // channel: [ meta, maf ]
     oncoplot       = ch_oncoplot        // channel: [ *.oncoplot.pdf ]
     versions       = ch_versions

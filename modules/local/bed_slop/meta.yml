@@ -1,0 +1,51 @@
+name: "bed_slop"
+description: Expand BED intervals by a fixed number of base pairs within genome bounds
+keywords:
+  - bed
+  - peaks
+  - slop
+  - bedtools
+tools:
+  - bedtools:
+      description: "A powerful toolset for genome arithmetic"
+      homepage: "https://bedtools.readthedocs.io"
+      documentation: "https://bedtools.readthedocs.io"
+      doi: "10.1093/bioinformatics/btq033"
+      licence: ["MIT"]
+      identifier: "biotools:bedtools"
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information
+    - bed:
+        type: file
+        description: BED file to expand
+        pattern: "*.bed"
+  - - meta2:
+        type: map
+        description: Groovy Map containing genome information
+    - fai:
+        type: file
+        description: FASTA index used to derive chromosome sizes
+        pattern: "*.fai"
+  - slop_bp:
+      type: integer
+      description: Number of base pairs to add on each side of each interval
+output:
+  bed:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample information
+      - "*.bed":
+          type: file
+          description: Expanded and merged BED intervals
+          pattern: "*.bed"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@atacportray"
+maintainers:
+  - "@atacportray"

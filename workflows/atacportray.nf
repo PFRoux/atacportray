@@ -18,6 +18,8 @@ include { BWA_INDEX                     } from '../modules/nf-core/bwa/index/mai
 include { SAMTOOLS_FAIDX                } from '../modules/nf-core/samtools/faidx/main'
 include { GATK4_CREATESEQUENCEDICTIONARY} from '../modules/nf-core/gatk4/createsequencedictionary/main'
 include { GUNZIP                        } from '../modules/nf-core/gunzip/main'
+include { BEDTOOLS_INTERSECT as FILTER_BAM_OUTSIDE_PEAKS } from '../modules/nf-core/bedtools/intersect/main'
+include { SAMTOOLS_INDEX as INDEX_CNV_BAM                } from '../modules/nf-core/samtools/index/main'
 
 //
 // SUBWORKFLOW: analysis branches
@@ -136,6 +138,7 @@ workflow ATACPORTRAY {
     // consumed by CNV / telomere / mito). Populated only if run_variants = true.
     //
     ch_analysis_bam = channel.empty()
+    ch_peak_regions = channel.empty()
 
     //
     // EPIGENOME branch
@@ -154,8 +157,10 @@ workflow ATACPORTRAY {
             params.rose_stitch,
             params.rose_tss,
             params.run_footprinting,
-            params.run_nucleoatac
+            params.run_nucleoatac,
+            params.peak_filter_slop
         )
+        ch_peak_regions  = FASTQ_EPIGENOME_BOWTIE2.out.peak_regions
         ch_versions      = ch_versions.mix(FASTQ_EPIGENOME_BOWTIE2.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(FASTQ_EPIGENOME_BOWTIE2.out.multiqc_files)
     }
@@ -180,7 +185,9 @@ workflow ATACPORTRAY {
             params.vep_species,
             params.vep_cache_version,
             callers,
-            params.run_oncoplot
+            params.run_oncoplot,
+            params.variants_in_peaks_only,
+            ch_peak_regions
         )
         ch_analysis_bam = FASTQ_VARIANT_CALLING_ATAC.out.bam
         ch_versions     = ch_versions.mix(FASTQ_VARIANT_CALLING_ATAC.out.versions)
@@ -196,8 +203,18 @@ workflow ATACPORTRAY {
     // Require run_variants = true so the analysis-ready BAM exists.
     //
     if ( params.run_cnv && params.run_variants ) {
+        ch_cnv_bam = ch_analysis_bam
+        if ( params.qdnaseq_exclude_peaks ) {
+            ch_filter_bam_in = ch_analysis_bam
+                .combine( ch_peak_regions )
+                .map { meta, bam, bai, peak_meta, peaks -> [ meta, bam, peaks ] }
+            FILTER_BAM_OUTSIDE_PEAKS ( ch_filter_bam_in, [[:], []] )
+            INDEX_CNV_BAM ( FILTER_BAM_OUTSIDE_PEAKS.out.intersect )
+            ch_cnv_bam = FILTER_BAM_OUTSIDE_PEAKS.out.intersect.join( INDEX_CNV_BAM.out.index )
+            ch_multiqc_files = ch_multiqc_files.mix(ch_cnv_bam.map { meta, bam, bai -> bam })
+        }
         BAM_CNV_QDNASEQ (
-            ch_analysis_bam,
+            ch_cnv_bam,
             params.qdnaseq_binsize,
             ch_qdnaseq_bins_rds,
             params.qdnaseq_loss_threshold,
