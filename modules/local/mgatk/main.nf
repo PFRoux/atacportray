@@ -27,8 +27,12 @@ process MGATK {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def keepdup = keep_duplicates ? "--keep-duplicates" : ""
     """
+    mkdir -p mgatk_input
+    ln -s ${bam} mgatk_input/${prefix}.bam
+    ln -s ${bai} mgatk_input/${prefix}.bam.bai
+
     mgatk call \\
-        --input $bam \\
+        --input mgatk_input \\
         --output ${prefix}.mgatk \\
         --name $prefix \\
         --mito-genome $mito_contig \\
