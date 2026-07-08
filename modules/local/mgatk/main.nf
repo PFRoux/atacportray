@@ -28,8 +28,8 @@ process MGATK {
     def keepdup = keep_duplicates ? "--keep-duplicates" : ""
     """
     mkdir -p mgatk_input
-    ln -s ${bam} mgatk_input/${prefix}.bam
-    ln -s ${bai} mgatk_input/${prefix}.bam.bai
+    ln -s ../${bam} mgatk_input/${prefix}.bam
+    ln -s ../${bai} mgatk_input/${prefix}.bam.bai
 
     mgatk call \\
         --input mgatk_input \\
