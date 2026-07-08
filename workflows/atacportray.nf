@@ -184,6 +184,11 @@ workflow ATACPORTRAY {
         )
         ch_analysis_bam = FASTQ_VARIANT_CALLING_ATAC.out.bam
         ch_versions     = ch_versions.mix(FASTQ_VARIANT_CALLING_ATAC.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(
+            FASTQ_VARIANT_CALLING_ATAC.out.vcf.map { meta, vcf -> vcf },
+            FASTQ_VARIANT_CALLING_ATAC.out.maf.map { meta, maf -> maf },
+            FASTQ_VARIANT_CALLING_ATAC.out.oncoplot
+        )
     }
 
     //
@@ -199,6 +204,11 @@ workflow ATACPORTRAY {
             params.qdnaseq_gain_threshold
         )
         ch_versions = ch_versions.mix(BAM_CNV_QDNASEQ.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(
+            BAM_CNV_QDNASEQ.out.calls.map { meta, calls -> calls },
+            BAM_CNV_QDNASEQ.out.segments.map { meta, segments -> segments },
+            BAM_CNV_QDNASEQ.out.plots.map { meta, plots -> plots }
+        )
     }
 
     if ( params.run_telomere && params.run_variants ) {
@@ -209,6 +219,10 @@ workflow ATACPORTRAY {
     if ( params.run_mito && params.run_variants ) {
         BAM_MITO_MGATK ( ch_analysis_bam, params.mito_contig, params.mgatk_keep_duplicates )
         ch_versions = ch_versions.mix(BAM_MITO_MGATK.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(
+            BAM_MITO_MGATK.out.variant_stats.map { meta, stats -> stats },
+            BAM_MITO_MGATK.out.final_dir.map { meta, final_dir -> final_dir }
+        )
     }
 
     //
