@@ -18,6 +18,7 @@ include { ENSEMBLVEP_VEP             } from '../../../modules/nf-core/ensemblvep
 include { VCF2MAF                    } from '../../../modules/nf-core/vcf2maf/main'
 include { MAFTOOLS_ONCOPLOT          } from '../../../modules/local/maftools_oncoplot/main'
 include { VCF_FILTER_REGIONS         } from '../../../modules/local/vcf_filter_regions/main'
+include { VCF_STATS                  } from '../../../modules/local/vcf_stats/main'
 
 workflow FASTQ_VARIANT_CALLING_ATAC {
 
@@ -148,6 +149,12 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     }
 
     //
+    // Variant-call summary statistics for MultiQC
+    //
+    VCF_STATS ( ch_vcfs_filtered )
+    ch_versions = ch_versions.mix(VCF_STATS.out.versions)
+
+    //
     // Annotate with VEP
     //
     if ( !skip_annotation ) {
@@ -181,6 +188,7 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     emit:
     bam            = ch_analysis_bam    // channel: [ meta, bam, bai ] (shared analysis-ready BAM)
     vcf            = ch_vcfs_filtered   // channel: [ meta(+caller), vcf ]
+    vcf_stats      = VCF_STATS.out.stats // channel: [ meta(+caller), stats ]
     maf            = ch_mafs            // channel: [ meta, maf ]
     oncoplot       = ch_oncoplot        // channel: [ *.oncoplot.pdf ]
     versions       = ch_versions

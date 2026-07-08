@@ -156,6 +156,8 @@ Produced only when `--run_footprinting` is set and `--tobias_motifs` is provided
   - `*.vcf.gz`, `*.vcf.gz.tbi` - Per-caller short-variant calls (DeepVariant, FreeBayes, HaplotypeCaller, bcftools)
 - `variants/vcf_in_peaks/<caller>/<sample>/`
   - `*.vcf.gz`, `*.vcf.gz.tbi` - Per-caller calls filtered to consensus peak regions expanded by `--peak_filter_slop` when `--variants_in_peaks_only` is enabled
+- `variants/stats/<caller>/<sample>/`
+  - `*.bcftools_stats.txt` - Per-caller VCF summary statistics consumed by MultiQC
 
 </details>
 

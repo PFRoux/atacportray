@@ -193,6 +193,7 @@ workflow ATACPORTRAY {
         ch_versions     = ch_versions.mix(FASTQ_VARIANT_CALLING_ATAC.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(
             FASTQ_VARIANT_CALLING_ATAC.out.vcf.map { meta, vcf -> vcf },
+            FASTQ_VARIANT_CALLING_ATAC.out.vcf_stats.map { meta, stats -> stats },
             FASTQ_VARIANT_CALLING_ATAC.out.maf.map { meta, maf -> maf },
             FASTQ_VARIANT_CALLING_ATAC.out.oncoplot
         )
