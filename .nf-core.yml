@@ -43,7 +43,6 @@ template:
   force: true
   outdir: atacportray
   skip_features:
-    - igenomes
     - gitpod
     - codespaces
     - fastqc

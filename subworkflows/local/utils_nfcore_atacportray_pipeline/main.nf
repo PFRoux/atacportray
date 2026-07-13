@@ -176,6 +176,10 @@ def validateInputSamplesheet(input) {
 }
 
 def validateAtacportrayParams() {
+    genomeExistsError()
+    if (!params.fasta && !getGenomeAttribute('fasta')) {
+        error("Please provide --fasta or a valid --genome key with a fasta entry in conf/igenomes.config.")
+    }
     if ((params.run_cnv || params.run_telomere || params.run_mito) && !params.run_variants) {
         error("Please enable --run_variants when using --run_cnv, --run_telomere or --run_mito because these branches require the shared analysis-ready BAM.")
     }
@@ -186,10 +190,14 @@ def validateAtacportrayParams() {
         error("Please provide --tobias_motifs when using --run_footprinting, or disable it with --run_footprinting false.")
     }
     if (params.run_variants && !params.skip_bqsr && (!params.known_sites || !params.known_sites_tbi)) {
-        error("Please provide --known_sites and --known_sites_tbi for BQSR, or disable BQSR with --skip_bqsr true.")
+        if (!getGenomeAttribute('known_sites') || !getGenomeAttribute('known_sites_tbi')) {
+            error("Please provide --known_sites and --known_sites_tbi for BQSR, define them for --genome in a custom config, or disable BQSR with --skip_bqsr true.")
+        }
     }
     if (params.run_variants && !params.skip_annotation && !params.vep_cache) {
-        error("Please provide --vep_cache for VEP annotation, or disable it with --skip_annotation true.")
+        if (!getGenomeAttribute('vep_cache')) {
+            error("Please provide --vep_cache, define vep_cache for --genome in a custom config, or disable annotation with --skip_annotation true.")
+        }
     }
     if (params.run_variants && params.skip_annotation && params.run_oncoplot) {
         error("Please disable --run_oncoplot when using --skip_annotation true.")
@@ -199,6 +207,32 @@ def validateAtacportrayParams() {
     }
     if (params.run_cnv && params.qdnaseq_exclude_peaks && !params.run_epigenome) {
         error("Please enable --run_epigenome when using --qdnaseq_exclude_peaks because consensus peaks are required.")
+    }
+}
+
+//
+// Get attribute from genome config file e.g. fasta
+//
+def getGenomeAttribute(attribute) {
+    if (params.genomes && params.genome && params.genomes.containsKey(params.genome)) {
+        if (params.genomes[ params.genome ].containsKey(attribute)) {
+            return params.genomes[ params.genome ][ attribute ]
+        }
+    }
+    return null
+}
+
+//
+// Exit pipeline if incorrect --genome key provided
+//
+def genomeExistsError() {
+    if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
+        def error_string = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n" +
+            "  Genome '${params.genome}' not found in any config files provided to the pipeline.\n" +
+            "  Currently, the available genome keys are:\n" +
+            "  ${params.genomes.keySet().join(', ')}\n" +
+            "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+        error(error_string)
     }
 }
 

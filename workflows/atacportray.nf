@@ -8,6 +8,7 @@ include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_atacportray_pipeline'
+include { getGenomeAttribute     } from '../subworkflows/local/utils_nfcore_atacportray_pipeline'
 
 //
 // MODULE: reference preparation
@@ -48,15 +49,23 @@ workflow ATACPORTRAY {
     //
     // Reference channels
     //
+    ref_fasta           = params.fasta          ?: getGenomeAttribute('fasta')
+    ref_bowtie2_index   = params.bowtie2_index  ?: getGenomeAttribute('bowtie2')
+    ref_bwa_index       = params.bwa_index      ?: getGenomeAttribute('bwa')
+    ref_blacklist       = params.blacklist      ?: getGenomeAttribute('blacklist')
+    ref_known_sites     = params.known_sites    ?: getGenomeAttribute('known_sites')
+    ref_known_sites_tbi = params.known_sites_tbi ?: getGenomeAttribute('known_sites_tbi')
+    ref_vep_cache       = params.vep_cache      ?: getGenomeAttribute('vep_cache')
+
     // Decompress FASTA if gzipped. Static reference files are value channels so
     // that every sample can reuse them in multi-input processes.
-    if ( params.fasta.endsWith('.gz') ) {
-        ch_fasta_raw = channel.fromPath(params.fasta, checkIfExists: true)
+    if ( ref_fasta.endsWith('.gz') ) {
+        ch_fasta_raw = channel.fromPath(ref_fasta, checkIfExists: true)
             .map { fa -> [ [id:'genome'], fa ] }
         GUNZIP ( ch_fasta_raw )
         ch_fasta = GUNZIP.out.gunzip.first()
     } else {
-        ch_fasta = channel.value([ [id:'genome'], file(params.fasta) ])
+        ch_fasta = channel.value([ [id:'genome'], file(ref_fasta) ])
     }
 
     // FASTA index (.fai) + chrom sizes
@@ -69,8 +78,8 @@ workflow ATACPORTRAY {
 
     // Bowtie2 index (epigenome)
     if ( params.run_epigenome ) {
-        if ( params.bowtie2_index ) {
-            ch_bowtie2_index = channel.value([ [id:'genome'], file(params.bowtie2_index) ])
+        if ( ref_bowtie2_index ) {
+            ch_bowtie2_index = channel.value([ [id:'genome'], file(ref_bowtie2_index) ])
         } else {
             BOWTIE2_BUILD ( ch_fasta )
             ch_bowtie2_index = BOWTIE2_BUILD.out.index
@@ -82,8 +91,8 @@ workflow ATACPORTRAY {
     // BWA index + GATK dict (variants)
     ch_dict = channel.value([[:], []])
     if ( params.run_variants ) {
-        if ( params.bwa_index ) {
-            ch_bwa_index = channel.value([ [id:'genome'], file(params.bwa_index) ])
+        if ( ref_bwa_index ) {
+            ch_bwa_index = channel.value([ [id:'genome'], file(ref_bwa_index) ])
         } else {
             BWA_INDEX ( ch_fasta )
             ch_bwa_index = BWA_INDEX.out.index
@@ -99,17 +108,17 @@ workflow ATACPORTRAY {
     }
 
     // Blacklist / motifs / known-sites / cytoBand / VEP cache
-    ch_blacklist = params.blacklist ?
-        channel.value([ [id:'blacklist'], file(params.blacklist) ]) :
+    ch_blacklist = ref_blacklist ?
+        channel.value([ [id:'blacklist'], file(ref_blacklist) ]) :
         channel.value([[:], []])
     ch_motifs = params.tobias_motifs ?
         channel.fromPath(params.tobias_motifs, checkIfExists: true).collect() :
         channel.value([])
-    ch_known_sites = params.known_sites ?
-        channel.value([ [id:'known'], file(params.known_sites) ]) :
+    ch_known_sites = ref_known_sites ?
+        channel.value([ [id:'known'], file(ref_known_sites) ]) :
         channel.value([[:], []])
-    ch_known_sites_tbi = params.known_sites_tbi ?
-        channel.value([ [id:'known'], file(params.known_sites_tbi) ]) :
+    ch_known_sites_tbi = ref_known_sites_tbi ?
+        channel.value([ [id:'known'], file(ref_known_sites_tbi) ]) :
         channel.value([[:], []])
     ch_cytoband = params.cytoband ?
         channel.fromPath(params.cytoband, checkIfExists: true).collect() :
@@ -117,8 +126,8 @@ workflow ATACPORTRAY {
     ch_qdnaseq_bins_rds = params.qdnaseq_bins_rds ?
         channel.fromPath(params.qdnaseq_bins_rds, checkIfExists: true).collect() :
         channel.value([])
-    ch_vep_cache = params.vep_cache ?
-        channel.value([ [id:'vep'], file(params.vep_cache) ]) :
+    ch_vep_cache = ref_vep_cache ?
+        channel.value([ [id:'vep'], file(ref_vep_cache) ]) :
         channel.value([[:], []])
 
     //
@@ -150,7 +159,7 @@ workflow ATACPORTRAY {
             ch_fasta,
             ch_fai,
             ch_blacklist,
-            params.blacklist as boolean,
+            ref_blacklist as boolean,
             params.macs_gsize,
             ch_motifs,
             params.run_epigenome,        // run_rose gate (ROSE always on within epigenome)

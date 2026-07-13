@@ -15,6 +15,8 @@ components:
   - deepvariant/rundeepvariant
   - freebayes
   - bcftools/mpileup
+  - vcf/filter/regions
+  - vcf/stats
   - samtools/index
   - ensemblvep/vep
   - vcf2maf
@@ -42,6 +44,9 @@ output:
   - vcf:
       type: file
       description: Variant call files
+  - vcf_stats:
+      type: file
+      description: BCFtools stats files for final VCFs
   - maf:
       type: file
       description: Optional MAF files

@@ -100,6 +100,37 @@ outdir: './results/'
 
 You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
 
+### Reference genomes
+
+Reference files can be provided explicitly, for example with `--fasta`,
+`--bowtie2_index`, `--bwa_index`, `--blacklist`, `--known_sites`,
+`--known_sites_tbi` and `--vep_cache`.
+
+Alternatively, use a supported iGenomes key with `--genome`. When `--genome`
+is supplied, the pipeline fills any missing reference paths from
+`conf/igenomes.config`; explicitly supplied parameters always take priority.
+For local mirrors of AWS iGenomes, set `--igenomes_base /path/to/igenomes`.
+Use `--igenomes_ignore` when you want to disable iGenomes and provide all
+reference files manually.
+
+The standard iGenomes table provides common FASTA and index paths, but does
+not provide all analysis-specific resources needed by atacportray. For BQSR
+and VEP annotation, either provide `--known_sites`, `--known_sites_tbi` and
+`--vep_cache` explicitly, or define these keys for your genome in a custom
+Nextflow config:
+
+```groovy title="atacportray_references.config"
+params {
+    genomes {
+        'GRCh38' {
+            known_sites     = '/path/to/dbsnp.vcf.gz'
+            known_sites_tbi = '/path/to/dbsnp.vcf.gz.tbi'
+            vep_cache       = '/path/to/vep_cache'
+        }
+    }
+}
+```
+
 ### Updating the pipeline
 
 When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:

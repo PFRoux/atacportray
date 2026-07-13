@@ -57,6 +57,18 @@
                     "description": "Name of iGenomes reference key (optional; explicit --fasta preferred).",
                     "fa_icon": "fas fa-book"
                 },
+                "igenomes_base": {
+                    "type": "string",
+                    "default": "s3://ngi-igenomes/igenomes/",
+                    "description": "Base path or URL for AWS iGenomes reference files. Can be set to a local iGenomes mirror.",
+                    "fa_icon": "fas fa-cloud"
+                },
+                "igenomes_ignore": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Ignore iGenomes config even if --genome is supplied. Use this with explicit reference paths.",
+                    "fa_icon": "fas fa-ban"
+                },
                 "fasta": {
                     "type": "string",
                     "format": "file-path",
