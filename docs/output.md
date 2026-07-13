@@ -208,6 +208,33 @@ Produced only when `--run_footprinting` is set and `--tobias_motifs` is provided
 
 </details>
 
+### Regulatory network branch
+
+#### ANANSE
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `regulatory_networks/ananse/binding/<sample>/`
+  - `binding.h5` - Per-sample ANANSE transcription factor binding prediction
+- `regulatory_networks/ananse/network/<sample>/`
+  - `*.network.tsv` - Per-sample ANANSE gene regulatory network, when `--run_ananse_network`
+- `regulatory_networks/ananse/influence/`
+  - `*.influence.tsv` - ANANSE source-to-target influence scores, when `--run_ananse_influence`
+  - `*diffnetwork*.tsv` - Optional differential network output
+
+</details>
+
+#### Coltron
+
+<details markdown="1">
+<summary>Output files</summary>
+
+- `regulatory_networks/coltron/<sample>/`
+  - Coltron transcriptional regulatory network outputs generated from ROSE enhancer tables
+
+</details>
+
 
 
 ### MultiQC

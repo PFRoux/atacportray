@@ -1,0 +1,6 @@
+name: ananse_binding
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::ananse=0.5.1

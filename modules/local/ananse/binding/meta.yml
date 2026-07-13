@@ -1,0 +1,55 @@
+name: "ANANSE_BINDING"
+description: Predict transcription factor binding profiles from ATAC-seq signal and enhancer regions using ANANSE.
+keywords:
+  - ananse
+  - binding
+  - regulatory networks
+  - atac-seq
+tools:
+  - "ananse":
+      description: "Enhancer network-based transcription factor prediction"
+      homepage: "https://github.com/vanheeringen-lab/ANANSE"
+      documentation: "https://anansepy.readthedocs.io/"
+      tool_dev_url: "https://github.com/vanheeringen-lab/ANANSE"
+      doi: "10.1093/nar/gkab598"
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: Sample metadata
+    - bam:
+        type: file
+        description: Indexed ATAC-seq BAM
+    - bai:
+        type: file
+        description: BAM index
+    - regions:
+        type: file
+        description: Enhancer/peak regions
+  - genome:
+      type: file
+      description: Genome FASTA or genomepy genome path/name
+  - pfm:
+      type: file
+      description: Optional PFM motif database
+  - reference:
+      type: directory
+      description: Optional ANANSE reference model directory
+  - tfs:
+      type: string
+      description: Optional TF list passed to ANANSE
+  - jaccard_cutoff:
+      type: number
+      description: Jaccard cutoff for backup motif models
+output:
+  - binding:
+      type: file
+      description: ANANSE binding.h5 output
+  - outdir:
+      type: directory
+      description: ANANSE binding output directory
+  - versions:
+      type: file
+      description: Software versions
+authors:
+  - "@PFRoux"

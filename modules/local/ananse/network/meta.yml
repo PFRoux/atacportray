@@ -1,0 +1,48 @@
+name: "ANANSE_NETWORK"
+description: Infer a gene regulatory network from ANANSE binding output and expression data.
+keywords:
+  - ananse
+  - network
+  - grn
+tools:
+  - "ananse":
+      description: "Enhancer network-based transcription factor prediction"
+      homepage: "https://github.com/vanheeringen-lab/ANANSE"
+      documentation: "https://anansepy.readthedocs.io/"
+      tool_dev_url: "https://github.com/vanheeringen-lab/ANANSE"
+      doi: "10.1093/nar/gkab598"
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: Sample metadata
+    - binding:
+        type: file
+        description: ANANSE binding.h5 file
+  - expression:
+      type: file
+      description: Gene expression table
+  - genome:
+      type: file
+      description: Genome FASTA or genomepy genome path/name
+  - annotation:
+      type: file
+      description: Optional BED12 annotation
+  - expression_column:
+      type: string
+      description: Expression column name; defaults to sample id
+  - full_output:
+      type: boolean
+      description: Export full GRN output
+  - tfs:
+      type: string
+      description: Optional TF list
+output:
+  - network:
+      type: file
+      description: ANANSE network TSV
+  - versions:
+      type: file
+      description: Software versions
+authors:
+  - "@PFRoux"

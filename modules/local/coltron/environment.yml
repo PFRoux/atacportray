@@ -1,0 +1,8 @@
+name: coltron
+channels:
+  - conda-forge
+dependencies:
+  - python=2.7
+  - pip
+  - pip:
+      - coltron==1.0.2

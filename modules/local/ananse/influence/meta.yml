@@ -1,0 +1,51 @@
+name: "ANANSE_INFLUENCE"
+description: Infer key transcription factors between source and target ANANSE networks.
+keywords:
+  - ananse
+  - influence
+  - transcription factors
+tools:
+  - "ananse":
+      description: "Enhancer network-based transcription factor prediction"
+      homepage: "https://github.com/vanheeringen-lab/ANANSE"
+      documentation: "https://anansepy.readthedocs.io/"
+      tool_dev_url: "https://github.com/vanheeringen-lab/ANANSE"
+      doi: "10.1093/nar/gkab598"
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: Analysis metadata
+    - source_network:
+        type: file
+        description: Source ANANSE network TSV
+    - target_network:
+        type: file
+        description: Target ANANSE network TSV
+    - degenes:
+        type: file
+        description: Differential expression table
+  - annotation:
+      type: file
+      description: Optional gene annotation
+  - edges:
+      type: integer
+      description: Number of top edges
+  - padj:
+      type: number
+      description: Adjusted p-value cutoff
+  - full_output:
+      type: boolean
+      description: Export full diff network
+output:
+  - influence:
+      type: file
+      description: ANANSE influence TSV
+  - diffnetwork:
+      type: file
+      description: Optional ANANSE differential network TSV
+  - versions:
+      type: file
+      description: Software versions
+authors:
+  - "@PFRoux"

@@ -1,0 +1,54 @@
+name: "COLTRON"
+description: Build transcriptional regulatory networks from ROSE enhancer tables using Coltron.
+keywords:
+  - coltron
+  - rose
+  - super-enhancers
+  - regulatory networks
+tools:
+  - "coltron":
+      description: "Application for generating and analyzing transcription networks"
+      homepage: "https://github.com/linlabcode/coltron"
+      documentation: "https://pypi.org/project/coltron/"
+      tool_dev_url: "https://github.com/linlabcode/coltron"
+      licence: ["UNKNOWN"]
+input:
+  - - meta:
+        type: map
+        description: Sample metadata
+    - enhancers:
+        type: file
+        description: ROSE enhancer table
+    - bam:
+        type: file
+        description: BAM corresponding to the ROSE enhancer table
+    - bai:
+        type: file
+        description: BAM index
+  - genome_build:
+      type: string
+      description: Coltron genome build label
+  - subpeaks:
+      type: file
+      description: Optional subpeaks BED file
+  - activity:
+      type: file
+      description: Optional activity table
+  - motifs:
+      type: file
+      description: Optional PWM motif file
+  - enhancer_number:
+      type: integer
+      description: Optional number of top ranked enhancers
+  - exp_cutoff:
+      type: number
+      description: Optional expression cutoff
+output:
+  - outdir:
+      type: directory
+      description: Coltron output directory
+  - versions:
+      type: file
+      description: Software versions
+authors:
+  - "@PFRoux"

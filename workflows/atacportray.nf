@@ -30,6 +30,10 @@ include { FASTQ_VARIANT_CALLING_ATAC    } from '../subworkflows/local/fastq_vari
 include { BAM_CNV_QDNASEQ               } from '../subworkflows/local/bam_cnv_qdnaseq/main'
 include { BAM_TELOMERE_TELOMEREHUNTER   } from '../subworkflows/local/bam_telomere_telomerehunter/main'
 include { BAM_MITO_MGATK                } from '../subworkflows/local/bam_mito_mgatk/main'
+include { ANANSE_BINDING                } from '../modules/local/ananse/binding/main'
+include { ANANSE_NETWORK                } from '../modules/local/ananse/network/main'
+include { ANANSE_INFLUENCE              } from '../modules/local/ananse/influence/main'
+include { COLTRON                       } from '../modules/local/coltron/main'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -148,6 +152,8 @@ workflow ATACPORTRAY {
     //
     ch_analysis_bam = channel.empty()
     ch_peak_regions = channel.empty()
+    ch_epigenome_bam = channel.empty()
+    ch_super_enhancers = channel.empty()
 
     //
     // EPIGENOME branch
@@ -169,9 +175,108 @@ workflow ATACPORTRAY {
             params.run_nucleoatac,
             params.peak_filter_slop
         )
+        ch_epigenome_bam = FASTQ_EPIGENOME_BOWTIE2.out.bam
         ch_peak_regions  = FASTQ_EPIGENOME_BOWTIE2.out.peak_regions
+        ch_super_enhancers = FASTQ_EPIGENOME_BOWTIE2.out.super_enhancers
         ch_versions      = ch_versions.mix(FASTQ_EPIGENOME_BOWTIE2.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(FASTQ_EPIGENOME_BOWTIE2.out.multiqc_files)
+    }
+
+    //
+    // Regulatory network branch (ANANSE / Coltron)
+    //
+    if ( params.run_ananse && params.run_epigenome ) {
+        ch_ananse_pfm = params.ananse_pfm ?
+            channel.value(file(params.ananse_pfm)) :
+            channel.value([])
+        ch_ananse_reference = params.ananse_reference ?
+            channel.value(file(params.ananse_reference)) :
+            channel.value([])
+        ch_ananse_binding_in = ch_epigenome_bam
+            .combine( ch_peak_regions.map { meta, bed -> bed } )
+            .map { meta, bam, bai, regions -> [ meta, bam, bai, regions ] }
+
+        ANANSE_BINDING (
+            ch_ananse_binding_in,
+            ch_fasta.map { meta, fasta -> fasta },
+            ch_ananse_pfm,
+            ch_ananse_reference,
+            params.ananse_tfs ?: '',
+            params.ananse_jaccard_cutoff
+        )
+        ch_versions = ch_versions.mix(ANANSE_BINDING.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(ANANSE_BINDING.out.binding.map { meta, binding -> binding })
+
+        if ( params.run_ananse_network ) {
+            ch_ananse_expression = channel.value(file(params.ananse_expression))
+            ch_ananse_annotation = params.ananse_annotation ?
+                channel.value(file(params.ananse_annotation)) :
+                channel.value([])
+
+            ANANSE_NETWORK (
+                ANANSE_BINDING.out.binding,
+                ch_ananse_expression,
+                ch_fasta.map { meta, fasta -> fasta },
+                ch_ananse_annotation,
+                params.ananse_expression_column ?: '',
+                params.ananse_network_full_output,
+                params.ananse_tfs ?: ''
+            )
+            ch_versions = ch_versions.mix(ANANSE_NETWORK.out.versions)
+            ch_multiqc_files = ch_multiqc_files.mix(ANANSE_NETWORK.out.network.map { meta, network -> network })
+        }
+    }
+
+    if ( params.run_ananse_influence ) {
+        ch_ananse_influence_in = channel.value([
+            [ id: 'ananse_influence' ],
+            file(params.ananse_source_network),
+            file(params.ananse_target_network),
+            file(params.ananse_degenes)
+        ])
+        ch_ananse_influence_annotation = params.ananse_influence_annotation ?
+            channel.value(file(params.ananse_influence_annotation)) :
+            channel.value([])
+
+        ANANSE_INFLUENCE (
+            ch_ananse_influence_in,
+            ch_ananse_influence_annotation,
+            params.ananse_influence_edges,
+            params.ananse_influence_padj,
+            params.ananse_influence_full_output
+        )
+        ch_versions = ch_versions.mix(ANANSE_INFLUENCE.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(
+            ANANSE_INFLUENCE.out.influence.map { meta, influence -> influence },
+            ANANSE_INFLUENCE.out.diffnetwork.map { meta, diffnetwork -> diffnetwork }
+        )
+    }
+
+    if ( params.run_coltron && params.run_epigenome ) {
+        ch_coltron_subpeaks = params.coltron_subpeaks ?
+            channel.value(file(params.coltron_subpeaks)) :
+            channel.value([])
+        ch_coltron_activity = params.coltron_activity ?
+            channel.value(file(params.coltron_activity)) :
+            channel.value([])
+        ch_coltron_motifs = params.coltron_motifs ?
+            channel.value(file(params.coltron_motifs)) :
+            channel.value([])
+        ch_coltron_in = ch_super_enhancers
+            .join( ch_epigenome_bam )
+            .map { meta, enhancers, bam, bai -> [ meta, enhancers, bam, bai ] }
+
+        COLTRON (
+            ch_coltron_in,
+            params.coltron_genome,
+            ch_coltron_subpeaks,
+            ch_coltron_activity,
+            ch_coltron_motifs,
+            params.coltron_enhancer_number ?: '',
+            params.coltron_exp_cutoff ?: ''
+        )
+        ch_versions = ch_versions.mix(COLTRON.out.versions)
+        ch_multiqc_files = ch_multiqc_files.mix(COLTRON.out.outdir.map { meta, outdir -> outdir })
     }
 
     //

@@ -208,6 +208,24 @@ def validateAtacportrayParams() {
     if (params.run_cnv && params.qdnaseq_exclude_peaks && !params.run_epigenome) {
         error("Please enable --run_epigenome when using --qdnaseq_exclude_peaks because consensus peaks are required.")
     }
+    if (params.run_ananse && !params.run_epigenome) {
+        error("Please enable --run_epigenome when using --run_ananse because ANANSE binding requires ATAC BAMs and consensus peaks.")
+    }
+    if (params.run_ananse_network && !params.run_ananse) {
+        error("Please enable --run_ananse when using --run_ananse_network.")
+    }
+    if (params.run_ananse_network && !params.ananse_expression) {
+        error("Please provide --ananse_expression when using --run_ananse_network.")
+    }
+    if (params.run_ananse_influence && (!params.ananse_source_network || !params.ananse_target_network || !params.ananse_degenes)) {
+        error("Please provide --ananse_source_network, --ananse_target_network and --ananse_degenes when using --run_ananse_influence.")
+    }
+    if (params.run_coltron && !params.run_epigenome) {
+        error("Please enable --run_epigenome when using --run_coltron because Coltron requires ROSE enhancer tables and ATAC BAMs.")
+    }
+    if (params.run_coltron && !(params.coltron_genome in ['HG19', 'HG18', 'MM9'])) {
+        log.warn("Coltron documentation only lists HG19, HG18 and MM9 as supported genomes. Current --coltron_genome is '${params.coltron_genome}'.")
+    }
 }
 
 //
@@ -248,6 +266,8 @@ def toolCitationText() {
             params.run_cnv ? "QDNAseq" : "",
             params.run_telomere ? "TelomereHunter" : "",
             params.run_mito ? "mgatk" : "",
+            params.run_ananse ? "ANANSE" : "",
+            params.run_coltron ? "Coltron" : "",
             "."
         ].join(' ').trim()
 

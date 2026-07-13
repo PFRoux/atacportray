@@ -16,7 +16,7 @@
 
 **atacportray/atacportray** is a bioinformatics pipeline for the multi-layer analysis of bulk **ATAC-seq** data from paired-end FASTQ files. Starting from raw reads and a reference genome, it produces a full epigenomic portrait (chromatin accessibility peaks, super-enhancers, coverage tracks and TF footprints) and, optionally, layers genetic and structural readouts mined from the same libraries: short-variant calls, copy-number profiles, telomere content and mitochondrial genotypes. All branches converge on a single [`MultiQC`](http://multiqc.info/) report.
 
-The workflow is organised as a shared preprocessing core followed by five toggleable analysis branches:
+The workflow is organised as a shared preprocessing core followed by toggleable analysis branches:
 
 1. Read QC and adapter/quality trimming ([`fastp`](https://github.com/OpenGene/fastp))
 2. **Epigenome branch** (`--run_epigenome`): Bowtie2 alignment, blacklist filtering, peak calling ([`MACS3`](https://github.com/macs3-project/MACS)), consensus peaks, coverage bigWigs ([`deepTools`](https://deeptools.readthedocs.io/)), super-enhancers ([`ROSE`](https://github.com/stjude/ROSE)) and optional TF footprinting ([`TOBIAS`](https://github.com/loosolab/TOBIAS))
@@ -24,9 +24,10 @@ The workflow is organised as a shared preprocessing core followed by five toggle
 4. **CNV branch** (`--run_cnv`): copy-number profiling with [`QDNAseq`](https://bioconductor.org/packages/QDNAseq/)
 5. **Telomere branch** (`--run_telomere`): telomere-content estimation with [`TelomereHunter`](https://www.dkfz.de/en/applied-bioinformatics/telomerehunter/telomerehunter.html)
 6. **Mitochondrial branch** (`--run_mito`): mtDNA variant/heteroplasmy calling with [`mgatk`](https://github.com/caleblareau/mgatk)
-7. Aggregate QC report ([`MultiQC`](http://multiqc.info/))
+7. **Regulatory network branch** (`--run_ananse`, `--run_coltron`): enhancer-based TF binding and GRN inference with [`ANANSE`](https://github.com/vanheeringen-lab/ANANSE), plus optional legacy [`Coltron`](https://pypi.org/project/coltron/) analysis from ROSE enhancer tables
+8. Aggregate QC report ([`MultiQC`](http://multiqc.info/))
 
-Only the epigenome branch runs by default; the genetic/structural branches are opt-in because they require a full-size reference genome (and, for CNV/telomere/mito, `--run_variants` to build the shared analysis-ready BAM). See [usage documentation](docs/usage.md) for the branch dependency graph.
+Only the epigenome branch runs by default; the genetic/structural and regulatory-network branches are opt-in because they require additional reference data and/or expression tables (and, for CNV/telomere/mito, `--run_variants` to build the shared analysis-ready BAM). See [usage documentation](docs/usage.md) for the branch dependency graph.
 
 ## Usage
 

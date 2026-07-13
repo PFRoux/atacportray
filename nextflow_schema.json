@@ -161,6 +161,18 @@
                     "default": false,
                     "description": "mgatk mitochondrial variant calling.",
                     "fa_icon": "fas fa-circle-notch"
+                },
+                "run_ananse": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run ANANSE enhancer-based transcription factor binding prediction and optional GRN inference.",
+                    "fa_icon": "fas fa-project-diagram"
+                },
+                "run_coltron": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run Coltron regulatory network analysis from ROSE enhancer tables. Legacy tool; documented genome support is HG19, HG18 and MM9.",
+                    "fa_icon": "fas fa-network-wired"
                 }
             }
         },
@@ -296,6 +308,148 @@
                     "default": 500,
                     "description": "Number of base pairs added on each side of consensus peaks for VCF filtering and QDNAseq peak masking.",
                     "fa_icon": "fas fa-expand-arrows-alt"
+                }
+            }
+        },
+        "regulatory_network_options": {
+            "title": "Regulatory network branch options",
+            "type": "object",
+            "fa_icon": "fas fa-project-diagram",
+            "description": "ANANSE and Coltron regulatory-network analyses built from ATAC-seq peaks, BAMs, expression tables and optional differential expression.",
+            "properties": {
+                "ananse_pfm": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional PFM motif database for ANANSE binding. The matching .motif2factors.txt file must sit next to it.",
+                    "fa_icon": "fas fa-file"
+                },
+                "ananse_reference": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Optional ANANSE reference model directory, e.g. ANANSE.REMAP.model.v1.0 for hg38.",
+                    "fa_icon": "fas fa-folder"
+                },
+                "ananse_tfs": {
+                    "type": "string",
+                    "description": "Optional whitespace-separated ANANSE transcription-factor list or file path.",
+                    "fa_icon": "fas fa-list"
+                },
+                "ananse_jaccard_cutoff": {
+                    "type": "number",
+                    "default": 0.1,
+                    "description": "ANANSE motif jaccard cutoff for backup TF models.",
+                    "fa_icon": "fas fa-percentage"
+                },
+                "run_ananse_network": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run ANANSE network from binding.h5 and an expression table.",
+                    "fa_icon": "fas fa-project-diagram"
+                },
+                "ananse_expression": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Expression table for ANANSE network. By default the pipeline uses the sample id as column name.",
+                    "fa_icon": "fas fa-file"
+                },
+                "ananse_expression_column": {
+                    "type": "string",
+                    "description": "Expression column passed to ANANSE network. Defaults to the current sample id.",
+                    "fa_icon": "fas fa-columns"
+                },
+                "ananse_annotation": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional BED12 annotation for ANANSE network.",
+                    "fa_icon": "fas fa-file"
+                },
+                "ananse_network_full_output": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Export full ANANSE network output.",
+                    "fa_icon": "fas fa-file-export"
+                },
+                "run_ananse_influence": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run ANANSE influence from explicit source/target networks and a differential-expression table.",
+                    "fa_icon": "fas fa-exchange-alt"
+                },
+                "ananse_source_network": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Source ANANSE network TSV for influence analysis.",
+                    "fa_icon": "fas fa-file"
+                },
+                "ananse_target_network": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Target ANANSE network TSV for influence analysis.",
+                    "fa_icon": "fas fa-file"
+                },
+                "ananse_degenes": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Differential expression table for ANANSE influence with log2FoldChange and padj columns.",
+                    "fa_icon": "fas fa-file"
+                },
+                "ananse_influence_annotation": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional GTF annotation for ANANSE influence.",
+                    "fa_icon": "fas fa-file"
+                },
+                "ananse_influence_edges": {
+                    "type": "integer",
+                    "default": 100000,
+                    "description": "Number of top network edges used by ANANSE influence.",
+                    "fa_icon": "fas fa-hashtag"
+                },
+                "ananse_influence_padj": {
+                    "type": "number",
+                    "default": 0.05,
+                    "description": "Adjusted p-value cutoff for ANANSE influence.",
+                    "fa_icon": "fas fa-percentage"
+                },
+                "ananse_influence_full_output": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Export full ANANSE influence differential network output.",
+                    "fa_icon": "fas fa-file-export"
+                },
+                "coltron_genome": {
+                    "type": "string",
+                    "default": "HG19",
+                    "description": "Coltron genome label. Coltron documentation lists HG19, HG18 and MM9.",
+                    "fa_icon": "fas fa-book"
+                },
+                "coltron_subpeaks": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional BED file of subpeaks for Coltron motif search.",
+                    "fa_icon": "fas fa-file"
+                },
+                "coltron_activity": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional Coltron activity table.",
+                    "fa_icon": "fas fa-file"
+                },
+                "coltron_motifs": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional Coltron PWM motif file.",
+                    "fa_icon": "fas fa-file"
+                },
+                "coltron_enhancer_number": {
+                    "type": "integer",
+                    "description": "Optional number of top ranked enhancers to include in Coltron.",
+                    "fa_icon": "fas fa-hashtag"
+                },
+                "coltron_exp_cutoff": {
+                    "type": "number",
+                    "description": "Optional Coltron expression cutoff for candidate TFs.",
+                    "fa_icon": "fas fa-filter"
                 }
             }
         },
@@ -630,6 +784,9 @@
         },
         {
             "$ref": "#/$defs/epigenome_options"
+        },
+        {
+            "$ref": "#/$defs/regulatory_network_options"
         },
         {
             "$ref": "#/$defs/variants_options"
