@@ -30,6 +30,14 @@ output:
           type: file
           description: BCFtools stats report
           pattern: "*.bcftools_stats.txt"
+  mqc:
+    - - meta:
+          type: map
+          description: Groovy Map containing sample and caller information
+      - "*_mqc.tsv":
+          type: file
+          description: MultiQC custom-content table with per-sample variant counts
+          pattern: "*_mqc.tsv"
   versions:
     - "versions.yml":
         type: file

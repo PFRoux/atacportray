@@ -189,6 +189,7 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     bam            = ch_analysis_bam    // channel: [ meta, bam, bai ] (shared analysis-ready BAM)
     vcf            = ch_vcfs_filtered   // channel: [ meta(+caller), vcf ]
     vcf_stats      = VCF_STATS.out.stats // channel: [ meta(+caller), stats ]
+    vcf_mqc        = VCF_STATS.out.mqc   // channel: [ meta(+caller), *_mqc.tsv ]
     maf            = ch_mafs            // channel: [ meta, maf ]
     oncoplot       = ch_oncoplot        // channel: [ *.oncoplot.pdf ]
     versions       = ch_versions

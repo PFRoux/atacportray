@@ -12,6 +12,7 @@ process VCF_STATS {
 
     output:
     tuple val(meta), path("*.bcftools_stats.txt"), emit: stats
+    tuple val(meta), path("*_mqc.tsv")           , emit: mqc
     path "versions.yml"                           , emit: versions
 
     when:
@@ -27,6 +28,30 @@ process VCF_STATS {
         ${vcf} \\
         > ${prefix}.bcftools_stats.txt
 
+    awk -v sample="${meta.id}" -v caller="${caller}" '
+        BEGIN {
+            records = snps = mnps = indels = others = multiallelic = 0
+        }
+        /^SN/ {
+            key = \$3
+            sub(":\$", "", key)
+            if (key == "number of records") records = \$4
+            else if (key == "number of SNPs") snps = \$4
+            else if (key == "number of MNPs") mnps = \$4
+            else if (key == "number of indels") indels = \$4
+            else if (key == "number of others") others = \$4
+            else if (key == "number of multiallelic sites") multiallelic = \$4
+        }
+        END {
+            print "# id: atacportray_variant_calls"
+            print "# section_name: Variant calls"
+            print "# description: Number and type of variants reported by each caller after atacportray filtering."
+            print "# plot_type: table"
+            print "Sample\\tCaller\\tRecords\\tSNPs\\tMNPs\\tIndels\\tOther\\tMultiallelic"
+            print sample "\\t" caller "\\t" records "\\t" snps "\\t" mnps "\\t" indels "\\t" others "\\t" multiallelic
+        }
+    ' ${prefix}.bcftools_stats.txt > ${prefix}.variant_counts_mqc.tsv
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         bcftools: \$(bcftools --version | sed '1!d; s/^.*bcftools //')
@@ -38,6 +63,15 @@ process VCF_STATS {
     def prefix = task.ext.prefix ?: "${meta.id}.${caller}"
     """
     touch ${prefix}.bcftools_stats.txt
+    cat <<-END_MQC > ${prefix}.variant_counts_mqc.tsv
+    # id: atacportray_variant_calls
+    # section_name: Variant calls
+    # description: Number and type of variants reported by each caller after atacportray filtering.
+    # plot_type: table
+    Sample	Caller	Records	SNPs	MNPs	Indels	Other	Multiallelic
+    ${meta.id}	${caller}	0	0	0	0	0	0
+    END_MQC
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         bcftools: 1.23.1
