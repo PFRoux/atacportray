@@ -31,6 +31,7 @@ process VCF_STATS {
     awk -v sample="${meta.id}" -v caller="${caller}" '
         BEGIN {
             records = snps = mnps = indels = others = multiallelic = 0
+            sample_caller = sample "." caller
         }
         /^SN/ {
             key = \$3
@@ -47,8 +48,8 @@ process VCF_STATS {
             print "# section_name: Variant calls"
             print "# description: Number and type of variants reported by each caller after atacportray filtering."
             print "# plot_type: table"
-            print "Sample\\tCaller\\tRecords\\tSNPs\\tMNPs\\tIndels\\tOther\\tMultiallelic"
-            print sample "\\t" caller "\\t" records "\\t" snps "\\t" mnps "\\t" indels "\\t" others "\\t" multiallelic
+            print "Sample_caller\\tSample\\tCaller\\tRecords\\tSNPs\\tMNPs\\tIndels\\tOther\\tMultiallelic"
+            print sample_caller "\\t" sample "\\t" caller "\\t" records "\\t" snps "\\t" mnps "\\t" indels "\\t" others "\\t" multiallelic
         }
     ' ${prefix}.bcftools_stats.txt > ${prefix}.variant_counts_mqc.tsv
 
@@ -68,8 +69,8 @@ process VCF_STATS {
     # section_name: Variant calls
     # description: Number and type of variants reported by each caller after atacportray filtering.
     # plot_type: table
-    Sample	Caller	Records	SNPs	MNPs	Indels	Other	Multiallelic
-    ${meta.id}	${caller}	0	0	0	0	0	0
+    Sample_caller	Sample	Caller	Records	SNPs	MNPs	Indels	Other	Multiallelic
+    ${meta.id}.${caller}	${meta.id}	${caller}	0	0	0	0	0	0
     END_MQC
 
     cat <<-END_VERSIONS > versions.yml
