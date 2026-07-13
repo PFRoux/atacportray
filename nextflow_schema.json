@@ -199,12 +199,6 @@
                     "format": "file-path",
                     "description": "Optional FASTA of adapters for fastp.",
                     "fa_icon": "fas fa-file"
-                },
-                "fastp_insert_size_max": {
-                    "type": "integer",
-                    "default": 2000,
-                    "description": "Maximum paired-end insert size reported by fastp and displayed by MultiQC.",
-                    "fa_icon": "fas fa-ruler-horizontal"
                 }
             }
         },

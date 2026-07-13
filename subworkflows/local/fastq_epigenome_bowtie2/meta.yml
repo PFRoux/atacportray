@@ -12,6 +12,7 @@ components:
   - bedtools/intersect
   - samtools/sort
   - samtools/index
+  - samtools/stats
   - deeptools/bamcoverage
   - macs3/callpeak
   - bed/slop

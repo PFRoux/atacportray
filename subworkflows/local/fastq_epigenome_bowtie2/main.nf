@@ -8,6 +8,7 @@ include { SAMTOOLS_VIEW        } from '../../../modules/nf-core/samtools/view/ma
 include { BEDTOOLS_INTERSECT   } from '../../../modules/nf-core/bedtools/intersect/main'
 include { SAMTOOLS_SORT        } from '../../../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_INDEX       } from '../../../modules/nf-core/samtools/index/main'
+include { SAMTOOLS_STATS       } from '../../../modules/nf-core/samtools/stats/main'
 include { DEEPTOOLS_BAMCOVERAGE} from '../../../modules/nf-core/deeptools/bamcoverage/main'
 include { MACS3_CALLPEAK       } from '../../../modules/nf-core/macs3/callpeak/main'
 include { ROSE                 } from '../../../modules/local/rose/main'
@@ -73,6 +74,8 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     SAMTOOLS_SORT ( ch_filtered_bam, ch_fasta.map{ m,f -> [m,f,[]] }, '' )
     SAMTOOLS_INDEX ( SAMTOOLS_SORT.out.bam )
     ch_bam_bai = SAMTOOLS_SORT.out.bam.join( SAMTOOLS_INDEX.out.index )
+    SAMTOOLS_STATS ( ch_bam_bai, ch_fasta.join(ch_fai) )
+    ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS_STATS.out.stats.collect{ it[1] }.ifEmpty([]))
 
     //
     // Coverage track (deepTools bamCoverage: -bs 20 --smoothLength 100 --extendReads)
