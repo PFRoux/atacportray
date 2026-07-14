@@ -14,17 +14,14 @@ tools:
       licence: ["MIT"]
       identifier: ""
 input:
-  - - meta:
-        type: map
-        description: "Groovy Map containing sample information e.g. `[ id:'sample1' ]`"
-    - bam:
-        type: file
-        description: Analysis-ready BAM (deduplicated, indexed)
-        pattern: "*.bam"
-    - bai:
-        type: file
-        description: BAM index
-        pattern: "*.bai"
+  - bams:
+      type: file
+      description: Analysis-ready BAM files (deduplicated, indexed)
+      pattern: "*.bam"
+  - bais:
+      type: file
+      description: BAM index files
+      pattern: "*.bai"
   - mito_contig:
       type: string
       description: Mitochondrial contig name (e.g. chrM)
@@ -33,35 +30,38 @@ input:
       description: Pass --keep-duplicates to mgatk
 output:
   variant_stats:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "*.mgatk/final/*.variant_stats.tsv.gz":
-          type: file
-          description: Per-position mitochondrial variant statistics
-          pattern: "*.variant_stats.tsv.gz"
+    - "*.mgatk/final/*.variant_stats.tsv.gz":
+        type: file
+        description: Per-position mitochondrial variant statistics
+        pattern: "*.variant_stats.tsv.gz"
   vmr:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "*.mgatk/final/*.vmr_strand.tsv.gz":
-          type: file
-          description: Variance-mean-ratio strand table
-          pattern: "*.vmr_strand.tsv.gz"
+    - "*.mgatk/final/*.vmr_strand.tsv.gz":
+        type: file
+        description: Variance-mean-ratio strand table
+        pattern: "*.vmr_strand.tsv.gz"
+  coverage:
+    - "*.mgatk/final/*.coverage.txt.gz":
+        type: file
+        description: Per-position mitochondrial coverage
+        pattern: "*.coverage.txt.gz"
+  rds:
+    - "*.mgatk/final/*.rds":
+        type: file
+        description: mgatk R object containing mitochondrial allele count matrices
+        pattern: "*.rds"
+  ref_allele:
+    - "*.mgatk/final/*_refAllele.txt":
+        type: file
+        description: Mitochondrial reference allele table
+        pattern: "*_refAllele.txt"
   final_dir:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "*.mgatk/final/":
-          type: directory
-          description: mgatk final output directory
+    - "*.mgatk/final/":
+        type: directory
+        description: mgatk final output directory
   outdir:
-    - - meta:
-          type: map
-          description: Groovy Map containing sample information
-      - "*.mgatk/":
-          type: directory
-          description: Full mgatk output directory
+    - "*.mgatk/":
+        type: directory
+        description: Full mgatk output directory
   versions:
     - "versions.yml":
         type: file

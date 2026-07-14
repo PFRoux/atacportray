@@ -1,0 +1,99 @@
+name: "mgatk_postprocess"
+description: Filter and summarize bulk mgatk mitochondrial heteroplasmy outputs
+keywords:
+  - mitochondria
+  - heteroplasmy
+  - mgatk
+  - multiqc
+tools:
+  - R:
+      description: Statistical computing and graphics
+      homepage: https://www.r-project.org/
+      documentation: https://cran.r-project.org/manuals.html
+      licence: ["GPL-2.0-or-later"]
+input:
+  - rds:
+      type: file
+      description: mgatk RDS outputs containing mitochondrial count assays
+      pattern: "*.rds"
+  - coverage:
+      type: file
+      description: mgatk per-position coverage files
+      pattern: "*.coverage.txt.gz"
+  - variant_stats:
+      type: file
+      description: mgatk variant statistics files
+      pattern: "*.variant_stats.tsv.gz"
+  - vmr:
+      type: file
+      description: mgatk VMR strand files
+      pattern: "*.vmr_strand.tsv.gz"
+  - min_af:
+      type: number
+      description: Minimum allele fraction for variant detection
+  - min_vmr:
+      type: number
+      description: Minimum variance-to-mean ratio
+  - min_sd:
+      type: number
+      description: Minimum across-sample allele-fraction standard deviation
+output:
+  summary:
+    - "mgatk_variant_summary.tsv":
+        type: file
+        description: Summary metrics for mitochondrial heteroplasmy filtering
+        pattern: "mgatk_variant_summary.tsv"
+  high_confidence:
+    - "mgatk_high_confidence_variants.tsv":
+        type: file
+        description: High-confidence mitochondrial variants
+        pattern: "mgatk_high_confidence_variants.tsv"
+  matrix:
+    - "mgatk_heteroplasmy_matrix.tsv":
+        type: file
+        description: Variant-by-sample heteroplasmy matrix
+        pattern: "mgatk_heteroplasmy_matrix.tsv"
+  coverage_table:
+    - "mgatk_mt_coverage.tsv":
+        type: file
+        description: Long-format per-position mitochondrial coverage
+        pattern: "mgatk_mt_coverage.tsv"
+  mqc:
+    - "mgatk_postprocess_mqc.tsv":
+        type: file
+        description: MultiQC custom-content summary table
+        pattern: "mgatk_postprocess_mqc.tsv"
+  coverage_mqc:
+    - "mgatk_mt_coverage_mqc.tsv":
+        type: file
+        description: MultiQC custom-content mitochondrial coverage line plot
+        pattern: "mgatk_mt_coverage_mqc.tsv"
+  coverage_circular_mqc:
+    - "mgatk_mt_coverage_circular_mqc.html":
+        type: file
+        description: MultiQC custom-content circular mitochondrial coverage plot
+        pattern: "mgatk_mt_coverage_circular_mqc.html"
+  coverage_circular:
+    - "mgatk_mt_coverage_circular.pdf":
+        type: file
+        description: Circular mitochondrial coverage plot
+        pattern: "mgatk_mt_coverage_circular.pdf"
+  heatmap:
+    - "mgatk_heteroplasmy_heatmap.pdf":
+        type: file
+        description: Heatmap of variable mitochondrial heteroplasmy calls
+        pattern: "mgatk_heteroplasmy_heatmap.pdf"
+  pca:
+    - "mgatk_heteroplasmy_pca.pdf":
+        type: file
+        description: PCA of variable mitochondrial heteroplasmy calls
+        pattern: "mgatk_heteroplasmy_pca.pdf"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

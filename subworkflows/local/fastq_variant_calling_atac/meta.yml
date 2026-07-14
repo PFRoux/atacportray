@@ -15,6 +15,9 @@ components:
   - deepvariant/rundeepvariant
   - freebayes
   - bcftools/mpileup
+  - samtools/flagstat
+  - samtools/idxstats
+  - samtools/stats
   - vcf/filter/regions
   - vcf/stats
   - samtools/index
@@ -47,12 +50,18 @@ output:
   - vcf_stats:
       type: file
       description: BCFtools stats files for final VCFs
+  - vcf_mqc:
+      type: file
+      description: MultiQC custom-content tables for final VCF counts
   - maf:
       type: file
       description: Optional MAF files
   - oncoplot:
       type: file
       description: Optional maftools oncoplot
+  - multiqc_files:
+      type: file
+      description: MultiQC input files from BWA alignment metrics
   - versions:
       type: file
       description: Software versions file

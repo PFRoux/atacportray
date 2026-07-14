@@ -12,6 +12,10 @@ include { GATK4_HAPLOTYPECALLER      } from '../../../modules/nf-core/gatk4/hapl
 include { DEEPVARIANT_RUNDEEPVARIANT } from '../../../modules/nf-core/deepvariant/rundeepvariant/main'
 include { FREEBAYES                  } from '../../../modules/nf-core/freebayes/main'
 include { BCFTOOLS_MPILEUP           } from '../../../modules/nf-core/bcftools/mpileup/main'
+include { SAMTOOLS_FLAGSTAT as SAMTOOLS_FLAGSTAT_BWA } from '../../../modules/nf-core/samtools/flagstat/main'
+include { SAMTOOLS_IDXSTATS as SAMTOOLS_IDXSTATS_BWA } from '../../../modules/nf-core/samtools/idxstats/main'
+include { SAMTOOLS_STATS as SAMTOOLS_STATS_BWA       } from '../../../modules/nf-core/samtools/stats/main'
+include { SAMTOOLS_INDEX as INDEX_BWA                } from '../../../modules/nf-core/samtools/index/main'
 include { SAMTOOLS_INDEX as INDEX_MARKDUP } from '../../../modules/nf-core/samtools/index/main'
 include { SAMTOOLS_INDEX as INDEX_ANALYSIS } from '../../../modules/nf-core/samtools/index/main'
 include { ENSEMBLVEP_VEP             } from '../../../modules/nf-core/ensemblvep/vep/main'
@@ -42,14 +46,31 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     ch_peak_regions  // channel: [ val(meta), path(bed) ]
 
     main:
-    ch_versions   = Channel.empty()
-    ch_vcfs       = Channel.empty()
-    ch_mafs       = Channel.empty()
+    ch_versions      = Channel.empty()
+    ch_multiqc_files = Channel.empty()
+    ch_vcfs          = Channel.empty()
+    ch_mafs          = Channel.empty()
 
     //
     // Align with BWA-MEM (sort_bam = true)
     //
     BWA_MEM ( ch_reads, ch_bwa_index, ch_fasta, true )
+    INDEX_BWA ( BWA_MEM.out.bam )
+    ch_bwa_bam = BWA_MEM.out.bam.join( INDEX_BWA.out.index )
+    ch_bwa_stats_ref = ch_fasta.combine(ch_fai)
+    ch_bwa_stats_in = ch_bwa_bam.combine(ch_bwa_stats_ref)
+
+    SAMTOOLS_FLAGSTAT_BWA ( ch_bwa_bam )
+    SAMTOOLS_IDXSTATS_BWA ( ch_bwa_bam )
+    SAMTOOLS_STATS_BWA (
+        ch_bwa_stats_in.map { meta, bam, bai, meta_fasta, fasta, meta_fai, fai -> [ meta, bam, bai ] },
+        ch_bwa_stats_in.map { meta, bam, bai, meta_fasta, fasta, meta_fai, fai -> [ meta_fasta, fasta, fai ] }
+    )
+    ch_multiqc_files = ch_multiqc_files.mix(
+        SAMTOOLS_FLAGSTAT_BWA.out.flagstat.map { meta, flagstat -> flagstat },
+        SAMTOOLS_IDXSTATS_BWA.out.idxstats.map { meta, idxstats -> idxstats },
+        SAMTOOLS_STATS_BWA.out.stats.map { meta, stats -> stats }
+    )
 
     //
     // GATK4 MarkDuplicates
@@ -192,5 +213,6 @@ workflow FASTQ_VARIANT_CALLING_ATAC {
     vcf_mqc        = VCF_STATS.out.mqc   // channel: [ meta(+caller), *_mqc.tsv ]
     maf            = ch_mafs            // channel: [ meta, maf ]
     oncoplot       = ch_oncoplot        // channel: [ *.oncoplot.pdf ]
+    multiqc_files  = ch_multiqc_files
     versions       = ch_versions
 }

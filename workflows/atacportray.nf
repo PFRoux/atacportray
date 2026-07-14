@@ -324,6 +324,7 @@ workflow ATACPORTRAY {
         ch_analysis_bam = FASTQ_VARIANT_CALLING_ATAC.out.bam
         ch_versions     = ch_versions.mix(FASTQ_VARIANT_CALLING_ATAC.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(
+            FASTQ_VARIANT_CALLING_ATAC.out.multiqc_files,
             FASTQ_VARIANT_CALLING_ATAC.out.vcf.map { meta, vcf -> vcf },
             FASTQ_VARIANT_CALLING_ATAC.out.vcf_stats.map { meta, stats -> stats },
             FASTQ_VARIANT_CALLING_ATAC.out.vcf_mqc.map { meta, mqc -> mqc },
@@ -368,11 +369,23 @@ workflow ATACPORTRAY {
     }
 
     if ( params.run_mito && params.run_variants ) {
-        BAM_MITO_MGATK ( ch_analysis_bam, params.mito_contig, params.mgatk_keep_duplicates )
+        BAM_MITO_MGATK (
+            ch_analysis_bam,
+            params.mito_contig,
+            params.mgatk_keep_duplicates,
+            params.run_mgatk_postprocess,
+            params.mgatk_min_af,
+            params.mgatk_min_vmr,
+            params.mgatk_min_sd
+        )
         ch_versions = ch_versions.mix(BAM_MITO_MGATK.out.versions)
         ch_multiqc_files = ch_multiqc_files.mix(
-            BAM_MITO_MGATK.out.variant_stats.map { meta, stats -> stats },
-            BAM_MITO_MGATK.out.final_dir.map { meta, final_dir -> final_dir }
+            BAM_MITO_MGATK.out.variant_stats,
+            BAM_MITO_MGATK.out.coverage,
+            BAM_MITO_MGATK.out.final_dir,
+            BAM_MITO_MGATK.out.post_mqc,
+            BAM_MITO_MGATK.out.post_coverage_mqc,
+            BAM_MITO_MGATK.out.post_coverage_circular_mqc
         )
     }
 

@@ -1,16 +1,17 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "BAM_MITO_MGATK"
-description: Run mgatk mitochondrial variant calling on analysis-ready ATAC-seq BAM files
+description: Run bulk mgatk mitochondrial variant calling on analysis-ready ATAC-seq BAM files
 keywords:
   - mitochondria
   - mgatk
   - heteroplasmy
 components:
   - mgatk
+  - mgatk/postprocess
 input:
   - ch_bam:
       type: file
-      description: Channel containing metadata, BAM and BAM index
+      description: Channel containing metadata, BAM and BAM index tuples; all BAMs are collected into one bulk mgatk call
   - mito_contig:
       type: string
       description: Name of the mitochondrial contig in the reference genome
@@ -21,12 +22,51 @@ output:
   - variant_stats:
       type: file
       description: mgatk variant statistics
+  - vmr:
+      type: file
+      description: mgatk VMR strand table
+  - coverage:
+      type: file
+      description: mgatk per-position mitochondrial coverage
+  - rds:
+      type: file
+      description: mgatk R objects
   - final_dir:
       type: directory
       description: mgatk final output directory
   - outdir:
       type: directory
       description: mgatk output directory
+  - post_summary:
+      type: file
+      description: mgatk post-processing summary table
+  - post_variants:
+      type: file
+      description: High-confidence mitochondrial variants
+  - post_matrix:
+      type: file
+      description: Mitochondrial heteroplasmy matrix
+  - post_mqc:
+      type: file
+      description: MultiQC custom-content table for mgatk post-processing
+  - post_coverage:
+      type: file
+      description: Mitochondrial coverage table
+  - post_coverage_mqc:
+      type: file
+      description: MultiQC custom-content linegraph for mitochondrial coverage
+  - post_coverage_circular_mqc:
+      type: file
+      description: MultiQC custom-content circular mitochondrial coverage plot
+  - post_coverage_circular:
+      type: file
+      description: Circular mitochondrial coverage plot
+  - post_heatmap:
+      type: file
+      description: Mitochondrial heteroplasmy heatmap
+  - post_pca:
+      type: file
+      description: Mitochondrial heteroplasmy PCA plot
   - versions:
       type: file
       description: Software versions file
