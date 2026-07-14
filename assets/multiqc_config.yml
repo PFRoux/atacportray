@@ -8,6 +8,12 @@ report_section_order:
     order: -1001
   "atacportray-atacportray-summary":
     order: -1002
+  atacportray_frip:
+    order: 900
+  atacportray_insert_sizes:
+    order: 901
+  atacportray_tss_profile:
+    order: 902
 
 export_plots: true
 
@@ -17,4 +23,6 @@ plot_config:
   fastp_insert_size_plot:
     xmax: 2000
   samtools_stats_insert_size_plot:
+    xmax: 2000
+  atacportray_insert_sizes:
     xmax: 2000

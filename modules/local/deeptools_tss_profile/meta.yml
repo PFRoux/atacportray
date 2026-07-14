@@ -1,0 +1,64 @@
+name: deeptools_tss_profile
+description: Build ATAC-seq TSS metaprofiles from bamCoverage bigWigs using deepTools computeMatrix and plotProfile.
+keywords:
+  - atac
+  - deeptools
+  - tss
+  - multiqc
+tools:
+  - deeptools:
+      description: User-friendly tools for exploring deep-sequencing data.
+      homepage: https://deeptools.readthedocs.io/
+      documentation: https://deeptools.readthedocs.io/
+      licence: ["GPL-3.0-only"]
+input:
+  - bigwigs:
+      type: file
+      description: bamCoverage bigWig files.
+      pattern: "*.{bw,bigWig}"
+  - tss_bed:
+      type: file
+      description: BED file containing TSS intervals.
+      pattern: "*.bed"
+  - before:
+      type: integer
+      description: Bases upstream of the TSS.
+  - after:
+      type: integer
+      description: Bases downstream of the TSS.
+  - binsize:
+      type: integer
+      description: computeMatrix bin size.
+output:
+  - matrix:
+      - atac_tss_matrix.gz:
+          type: file
+          description: deepTools computeMatrix matrix.
+          pattern: "atac_tss_matrix.gz"
+  - matrix_tab:
+      - atac_tss_matrix.tab:
+          type: file
+          description: Tabular computeMatrix output.
+          pattern: "atac_tss_matrix.tab"
+  - profile_pdf:
+      - atac_tss_profile.pdf:
+          type: file
+          description: deepTools plotProfile PDF.
+          pattern: "atac_tss_profile.pdf"
+  - profile_data:
+      - atac_tss_profile.tab:
+          type: file
+          description: deepTools plotProfile data table.
+          pattern: "atac_tss_profile.tab"
+  - mqc:
+      - atac_tss_profile_mqc.json:
+          type: file
+          description: MultiQC custom-content TSS metaprofile table.
+          pattern: "atac_tss_profile_mqc.json"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions.
+          pattern: "versions.yml"
+authors:
+  - "@PFRoux"

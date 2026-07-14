@@ -1,0 +1,31 @@
+name: "atac_insert_size_mqc"
+description: Build a MultiQC custom-content line plot of ATAC-seq insert sizes from samtools stats output
+keywords:
+  - atac-seq
+  - insert size
+  - samtools
+  - multiqc
+tools:
+  - awk:
+      description: "AWK is a language for text processing and data extraction."
+      licence: ["GPL-3.0-or-later"]
+input:
+  - stats_files:
+      type: file
+      description: samtools stats files
+      pattern: "*.stats"
+output:
+  mqc:
+    - "atac_insert_sizes_mqc.json":
+        type: file
+        description: MultiQC custom-content linegraph with ATAC insert-size distributions
+        pattern: "*_mqc.json"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@PFRoux"
+maintainers:
+  - "@PFRoux"

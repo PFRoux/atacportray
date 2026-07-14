@@ -18,6 +18,9 @@ include { TOBIAS_ATACORRECT    } from '../../../modules/local/tobias/atacorrect/
 include { TOBIAS_SCOREBIGWIG   } from '../../../modules/local/tobias/scorebigwig/main'
 include { TOBIAS_BINDETECT     } from '../../../modules/local/tobias/bindetect/main'
 include { BED_SLOP             } from '../../../modules/local/bed_slop/main'
+include { ATAC_INSERT_SIZE_MQC } from '../../../modules/local/atac_insert_size_mqc/main'
+include { ATAC_FRIP_MQC        } from '../../../modules/local/atac_frip_mqc/main'
+include { DEEPTOOLS_TSS_PROFILE} from '../../../modules/local/deeptools_tss_profile/main'
 
 workflow FASTQ_EPIGENOME_BOWTIE2 {
 
@@ -36,6 +39,11 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     run_tobias        // value:   boolean
     run_nucleoatac    // value:   boolean
     peak_filter_slop  // value:   e.g. 500
+    run_tss_profile   // value:   boolean
+    ch_tss_regions    // channel: path(tss.bed)
+    tss_before        // value:   e.g. 2000
+    tss_after         // value:   e.g. 2000
+    tss_binsize       // value:   e.g. 10
 
     main:
     ch_versions      = Channel.empty()
@@ -76,6 +84,9 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     ch_bam_bai = SAMTOOLS_SORT.out.bam.join( SAMTOOLS_INDEX.out.index )
     SAMTOOLS_STATS ( ch_bam_bai, ch_fasta.join(ch_fai) )
     ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS_STATS.out.stats.collect{ it[1] }.ifEmpty([]))
+    ATAC_INSERT_SIZE_MQC ( SAMTOOLS_STATS.out.stats.map{ meta, stats -> stats }.collect() )
+    ch_multiqc_files = ch_multiqc_files.mix(ATAC_INSERT_SIZE_MQC.out.mqc)
+    ch_versions = ch_versions.mix(ATAC_INSERT_SIZE_MQC.out.versions)
 
     //
     // Coverage track (deepTools bamCoverage: -bs 20 --smoothLength 100 --extendReads)
@@ -87,12 +98,29 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
         ch_blacklist
     )
 
+    if ( run_tss_profile ) {
+        DEEPTOOLS_TSS_PROFILE (
+            DEEPTOOLS_BAMCOVERAGE.out.bigwig.map { meta, bigwig -> bigwig }.collect(),
+            ch_tss_regions,
+            tss_before,
+            tss_after,
+            tss_binsize
+        )
+        ch_multiqc_files = ch_multiqc_files.mix(DEEPTOOLS_TSS_PROFILE.out.mqc)
+        ch_versions = ch_versions.mix(DEEPTOOLS_TSS_PROFILE.out.versions)
+    }
+
     //
     // Peak calling (MACS3 callpeak --format BAMPE --gsize hs --keep-dup all --qvalue 0.1)
     //
     ch_macs_in = SAMTOOLS_SORT.out.bam.map { meta, bam -> [ meta, bam, [] ] }
     MACS3_CALLPEAK ( ch_macs_in, macs3_gsize )
     ch_multiqc_files = ch_multiqc_files.mix(MACS3_CALLPEAK.out.xls.collect{ it[1] }.ifEmpty([]))
+    ch_frip_in = ch_bam_bai.join( MACS3_CALLPEAK.out.peak )
+        .map { meta, bam, bai, peak -> [ meta, bam, bai, peak ] }
+    ATAC_FRIP_MQC ( ch_frip_in )
+    ch_multiqc_files = ch_multiqc_files.mix(ATAC_FRIP_MQC.out.mqc.map { meta, mqc -> mqc })
+    ch_versions = ch_versions.mix(ATAC_FRIP_MQC.out.versions)
 
     //
     // Consensus peak set used by footprinting, variant filtering and CNV masking

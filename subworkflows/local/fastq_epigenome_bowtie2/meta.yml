@@ -22,6 +22,9 @@ components:
   - tobias/atacorrect
   - tobias/scorebigwig
   - tobias/bindetect
+  - atac/insert/size/mqc
+  - atac/frip/mqc
+  - deeptools/tss/profile
 input:
   - ch_reads:
       type: file
@@ -38,6 +41,9 @@ input:
   - ch_blacklist:
       type: file
       description: Optional blacklist BED
+  - ch_tss_regions:
+      type: file
+      description: Optional TSS BED used for deepTools metaprofiles
 output:
   - bam:
       type: file

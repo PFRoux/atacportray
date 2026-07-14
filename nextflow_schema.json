@@ -108,6 +108,13 @@
                     "description": "Gene annotation GTF (optional).",
                     "fa_icon": "fas fa-file"
                 },
+                "tss_bed": {
+                    "type": "string",
+                    "format": "file-path",
+                    "pattern": "^\\S+\\.bed(\\.gz)?$",
+                    "description": "Optional BED file of TSS intervals for ATAC TSS metaprofiles. If omitted, --gtf is converted to TSS BED when --run_tss_profile is true.",
+                    "fa_icon": "fas fa-file"
+                },
                 "blacklist": {
                     "type": "string",
                     "format": "file-path",
@@ -232,6 +239,35 @@
                     ],
                     "description": "Coverage normalization method.",
                     "fa_icon": "fas fa-balance-scale"
+                },
+                "bamcoverage_effective_genome_size": {
+                    "type": "integer",
+                    "description": "Effective genome size passed to deepTools bamCoverage when --bamcoverage_normalization is RPGC. Defaults to --macs_gsize when unset.",
+                    "fa_icon": "fas fa-ruler"
+                },
+                "run_tss_profile": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Run deepTools computeMatrix/plotProfile on bamCoverage bigWigs around TSS regions and add a TSS metaprofile to MultiQC.",
+                    "fa_icon": "fas fa-chart-line"
+                },
+                "tss_profile_before": {
+                    "type": "integer",
+                    "default": 2000,
+                    "description": "Bases upstream of TSS used by deepTools computeMatrix.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "tss_profile_after": {
+                    "type": "integer",
+                    "default": 2000,
+                    "description": "Bases downstream of TSS used by deepTools computeMatrix.",
+                    "fa_icon": "fas fa-ruler-horizontal"
+                },
+                "tss_profile_binsize": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Bin size used by deepTools computeMatrix for TSS metaprofiles.",
+                    "fa_icon": "fas fa-ruler-horizontal"
                 },
                 "macs_gsize": {
                     "type": "string",

@@ -19,6 +19,7 @@ include { BWA_INDEX                     } from '../modules/nf-core/bwa/index/mai
 include { SAMTOOLS_FAIDX                } from '../modules/nf-core/samtools/faidx/main'
 include { GATK4_CREATESEQUENCEDICTIONARY} from '../modules/nf-core/gatk4/createsequencedictionary/main'
 include { GUNZIP                        } from '../modules/nf-core/gunzip/main'
+include { GTF_TO_TSS_BED                } from '../modules/local/gtf_to_tss_bed/main'
 include { BEDTOOLS_INTERSECT as FILTER_BAM_OUTSIDE_PEAKS } from '../modules/nf-core/bedtools/intersect/main'
 include { SAMTOOLS_INDEX as INDEX_CNV_BAM                } from '../modules/nf-core/samtools/index/main'
 
@@ -133,6 +134,18 @@ workflow ATACPORTRAY {
     ch_vep_cache = ref_vep_cache ?
         channel.value([ [id:'vep'], file(ref_vep_cache) ]) :
         channel.value([[:], []])
+    ch_tss_regions = channel.empty()
+    if ( params.run_tss_profile ) {
+        if ( params.tss_bed ) {
+            ch_tss_regions = channel.fromPath(params.tss_bed, checkIfExists: true)
+        } else if ( params.gtf ) {
+            GTF_TO_TSS_BED ( channel.fromPath(params.gtf, checkIfExists: true) )
+            ch_tss_regions = GTF_TO_TSS_BED.out.bed
+            ch_versions = ch_versions.mix(GTF_TO_TSS_BED.out.versions)
+        } else {
+            error("TSS profiling requires --tss_bed or --gtf when --run_tss_profile is true.")
+        }
+    }
 
     //
     // Read trimming (fastp)
@@ -173,7 +186,12 @@ workflow ATACPORTRAY {
             params.rose_tss,
             params.run_footprinting,
             params.run_nucleoatac,
-            params.peak_filter_slop
+            params.peak_filter_slop,
+            params.run_tss_profile,
+            ch_tss_regions,
+            params.tss_profile_before,
+            params.tss_profile_after,
+            params.tss_profile_binsize
         )
         ch_epigenome_bam = FASTQ_EPIGENOME_BOWTIE2.out.bam
         ch_peak_regions  = FASTQ_EPIGENOME_BOWTIE2.out.peak_regions

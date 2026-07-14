@@ -1,0 +1,44 @@
+name: atac_frip_mqc
+description: Build a MultiQC custom-content FRiP table for ATAC-seq samples.
+keywords:
+  - atac
+  - frip
+  - multiqc
+tools:
+  - samtools:
+      description: Tools for reading/writing/editing/indexing/viewing SAM/BAM/CRAM format.
+      homepage: https://www.htslib.org/
+      documentation: http://www.htslib.org/doc/samtools.html
+      licence: ["MIT"]
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing sample information e.g. [ id:'sample1' ]
+    - bam:
+        type: file
+        description: Coordinate-sorted BAM file.
+        pattern: "*.bam"
+    - bai:
+        type: file
+        description: BAM index.
+        pattern: "*.bai"
+    - peaks:
+        type: file
+        description: Peak regions used to compute reads in peaks.
+        pattern: "*.{bed,narrowPeak,broadPeak}"
+output:
+  - mqc:
+      - meta:
+          type: map
+          description: Groovy Map containing sample information.
+      - "*_frip_mqc.tsv":
+          type: file
+          description: MultiQC custom-content FRiP table.
+          pattern: "*_frip_mqc.tsv"
+  - versions:
+      - versions.yml:
+          type: file
+          description: File containing software versions.
+          pattern: "versions.yml"
+authors:
+  - "@PFRoux"
