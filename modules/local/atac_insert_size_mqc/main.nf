@@ -67,7 +67,7 @@ process ATAC_INSERT_SIZE_MQC {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        awk: \$(awk -W version 2>&1 | sed -n '1s/.*Awk //p;1s/,.*//p')
+        awk: unknown
     END_VERSIONS
     """
 
