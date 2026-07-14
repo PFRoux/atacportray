@@ -1,25 +1,36 @@
 name: "atac_insert_size_mqc"
-description: Build a MultiQC custom-content line plot of ATAC-seq insert sizes from samtools stats output
+description: Build a MultiQC custom-content line plot of ATAC-seq fragment sizes from paired-end BAM TLEN values
 keywords:
   - atac-seq
   - insert size
   - samtools
   - multiqc
 tools:
-  - awk:
-      description: "AWK is a language for text processing and data extraction."
-      licence: ["GPL-3.0-or-later"]
+  - samtools:
+      description: Tools for reading/writing/editing/indexing/viewing SAM/BAM/CRAM format.
+      homepage: https://www.htslib.org/
+      documentation: http://www.htslib.org/doc/samtools.html
+      licence: ["MIT"]
 input:
-  - stats_files:
+  - bams:
       type: file
-      description: samtools stats files
-      pattern: "*.stats"
+      description: Coordinate-sorted BAM files.
+      pattern: "*.bam"
+  - bais:
+      type: file
+      description: BAM index files.
+      pattern: "*.bai"
 output:
   mqc:
-    - "atac_insert_sizes_mqc.json":
+    - "atac_insert_sizes_mqc.tsv":
         type: file
-        description: MultiQC custom-content linegraph with ATAC insert-size distributions
-        pattern: "*_mqc.json"
+        description: MultiQC custom-content linegraph with ATAC fragment-size distributions normalized per million fragments
+        pattern: "atac_insert_sizes_mqc.tsv"
+  sizes:
+    - "atac_fragment_sizes.tsv":
+        type: file
+        description: Fragment-size counts and fragments-per-million values for all samples
+        pattern: "atac_fragment_sizes.tsv"
   versions:
     - "versions.yml":
         type: file

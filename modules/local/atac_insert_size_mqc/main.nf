@@ -1,13 +1,20 @@
 process ATAC_INSERT_SIZE_MQC {
     tag "atac_insert_sizes"
-    label 'process_single'
+    label 'process_low'
+
+    conda "${moduleDir}/environment.yml"
+    container "${workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container
+        ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/8c/8c5d2818c8b9f58e1fba77ce219fdaf32087ae53e857c4a496402978af26e78c/data'
+        : 'community.wave.seqera.io/library/htslib_samtools:1.23.1--5b6bb4ede7e612e5'}"
 
     input:
-    path stats_files
+    path bams
+    path bais
 
     output:
-    path "atac_insert_sizes_mqc.json", emit: mqc
-    path "versions.yml"               , emit: versions
+    path "atac_fragment_sizes.tsv"   , emit: sizes
+    path "atac_insert_sizes_mqc.tsv" , emit: mqc
+    path "versions.yml"              , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -15,87 +22,90 @@ process ATAC_INSERT_SIZE_MQC {
     script:
     def max_size = task.ext.max_size ?: 2000
     """
-    awk -v max_size=${max_size} '
-        FNR == 1 {
-            sample = FILENAME
-            sub(/^.*\\//, "", sample)
-            sub(/\\.filtered\\.sorted\\.stats\$/, "", sample)
-            sub(/\\.stats\$/, "", sample)
-            samples[++ns] = sample
-        }
-        /^IS/ {
-            size = \$2
-            if (size <= max_size) {
-                count[sample, size] = \$3
-                seen[size] = 1
-            }
-        }
-        END {
-            print "{"
-            print "  \\"id\\": \\"atacportray_insert_sizes\\","
-            print "  \\"section_name\\": \\"ATAC insert sizes\\","
-            print "  \\"plot_type\\": \\"linegraph\\","
-            print "  \\"description\\": \\"Insert-size distribution from aligned, filtered ATAC-seq BAM files.\\","
-            print "  \\"pconfig\\": {"
-            print "    \\"id\\": \\"atacportray_insert_sizes\\","
-            print "    \\"title\\": \\"ATAC insert size distribution\\","
-            print "    \\"xlab\\": \\"Insert size (bp)\\","
-            print "    \\"ylab\\": \\"Read pairs\\","
-            print "    \\"xmax\\": " max_size
-            print "  },"
-            print "  \\"data\\": {"
-            for (i = 1; i <= ns; i++) {
-                sample = samples[i]
-                printf "    \\"%s\\": {", sample
-                for (size = 1; size <= max_size; size++) {
-                    value = ((sample, size) in count) ? count[sample, size] : 0
-                    printf "\\"%d\\": %d", size, value
-                    if (size < max_size) {
-                        printf ", "
+    printf "sample\\tinsert_size\\tfragments\\tfragments_per_million\\n" > atac_fragment_sizes.tsv
+
+    cat <<-END_MQC > atac_insert_sizes_mqc.tsv
+    # id: atacportray_insert_sizes
+    # section_name: ATAC insert size distribution
+    # description: Fragment-size distribution from properly paired aligned ATAC-seq reads, counted once per pair using positive TLEN and normalized per million fragments.
+    # plot_type: linegraph
+    # pconfig:
+    #   id: atacportray_insert_sizes
+    #   title: ATAC insert size distribution
+    #   xlab: Insert size (bp)
+    #   ylab: Fragments per million
+    #   xmax: ${max_size}
+    END_MQC
+
+    for bam in ${bams}; do
+        sample=\$(basename "\${bam}")
+        sample=\${sample%.filtered.sorted.bam}
+        sample=\${sample%.sorted.bam}
+        sample=\${sample%.bam}
+
+        samtools view \\
+            -@ ${task.cpus - 1} \\
+            -f 2 \\
+            -F 3844 \\
+            "\${bam}" \\
+            | awk -v sample="\${sample}" -v max_size=${max_size} '
+            {
+                size = \$9
+                if (size > 0) {
+                    total++
+                    if (size <= max_size) {
+                        counts[size]++
                     }
                 }
-                printf "}"
-                if (i < ns) {
-                    printf ","
-                }
-                printf "\\n"
             }
-            print "  }"
-            print "}"
-        }
-    ' ${stats_files} > atac_insert_sizes_mqc.json
+
+            END {
+                printf "%s", sample >> "atac_insert_sizes_mqc.tsv"
+                for (size = 1; size <= max_size; size++) {
+                    count = counts[size] + 0
+                    fpm = (total > 0) ? (count / total) * 1000000 : 0
+                    printf "%s\\t%d\\t%d\\t%.6f\\n", sample, size, count, fpm >> "atac_fragment_sizes.tsv"
+                    printf "\\t%.6f", fpm >> "atac_insert_sizes_mqc.tsv"
+                }
+                printf "\\n" >> "atac_insert_sizes_mqc.tsv"
+            }
+        '
+    done
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        awk: unknown
+        samtools: \$(samtools version | sed '1!d;s/.* //')
     END_VERSIONS
     """
 
     stub:
     """
-    cat <<-END_MQC > atac_insert_sizes_mqc.json
-    {
-      "id": "atacportray_insert_sizes",
-      "section_name": "ATAC insert sizes",
-      "plot_type": "linegraph",
-      "description": "Insert-size distribution from aligned, filtered ATAC-seq BAM files.",
-      "pconfig": {
-        "id": "atacportray_insert_sizes",
-        "title": "ATAC insert size distribution",
-        "xlab": "Insert size (bp)",
-        "ylab": "Read pairs",
-        "xmax": 2000
-      },
-      "data": {
-        "S1": {"1": 0, "2": 0},
-        "S2": {"1": 0, "2": 0}
-      }
-    }
+    cat <<-END_SIZES > atac_fragment_sizes.tsv
+    sample	insert_size	fragments	fragments_per_million
+    S1	1	0	0.000000
+    S1	2	0	0.000000
+    S2	1	0	0.000000
+    S2	2	0	0.000000
+    END_SIZES
+
+    cat <<-END_MQC > atac_insert_sizes_mqc.tsv
+    # id: atacportray_insert_sizes
+    # section_name: ATAC insert size distribution
+    # description: Fragment-size distribution from properly paired aligned ATAC-seq reads, counted once per pair using positive TLEN and normalized per million fragments.
+    # plot_type: linegraph
+    # pconfig:
+    #   id: atacportray_insert_sizes
+    #   title: ATAC insert size distribution
+    #   xlab: Insert size (bp)
+    #   ylab: Fragments per million
+    #   xmax: 2000
+    S1	0.000000	0.000000
+    S2	0.000000	0.000000
     END_MQC
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        awk: unknown
+        samtools: 1.23.1
     END_VERSIONS
     """
 }

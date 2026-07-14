@@ -26,3 +26,4 @@ plot_config:
     xmax: 2000
   atacportray_insert_sizes:
     xmax: 2000
+    ylab: Fragments per million

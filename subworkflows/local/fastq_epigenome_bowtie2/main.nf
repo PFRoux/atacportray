@@ -89,7 +89,10 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
         ch_stats_in.map { meta, bam, bai, meta_fasta, fasta, meta_fai, fai -> [ meta_fasta, fasta, fai ] }
     )
     ch_multiqc_files = ch_multiqc_files.mix(SAMTOOLS_STATS.out.stats.collect{ it[1] }.ifEmpty([]))
-    ATAC_INSERT_SIZE_MQC ( SAMTOOLS_STATS.out.stats.map{ meta, stats -> stats }.collect() )
+    ATAC_INSERT_SIZE_MQC (
+        ch_bam_bai.map { meta, bam, bai -> bam }.collect(),
+        ch_bam_bai.map { meta, bam, bai -> bai }.collect()
+    )
     ch_multiqc_files = ch_multiqc_files.mix(ATAC_INSERT_SIZE_MQC.out.mqc)
     ch_versions = ch_versions.mix(ATAC_INSERT_SIZE_MQC.out.versions)
 
