@@ -35,13 +35,17 @@ process VCF_STATS {
         }
         /^SN/ {
             key = \$3
+            for (i = 4; i < NF; i++) {
+                key = key " " \$i
+            }
             sub(":\$", "", key)
-            if (key == "number of records") records = \$4
-            else if (key == "number of SNPs") snps = \$4
-            else if (key == "number of MNPs") mnps = \$4
-            else if (key == "number of indels") indels = \$4
-            else if (key == "number of others") others = \$4
-            else if (key == "number of multiallelic sites") multiallelic = \$4
+            value = \$NF
+            if (key == "number of records") records = value
+            else if (key == "number of SNPs") snps = value
+            else if (key == "number of MNPs") mnps = value
+            else if (key == "number of indels") indels = value
+            else if (key == "number of others") others = value
+            else if (key == "number of multiallelic sites") multiallelic = value
         }
         END {
             print "# id: atacportray_variant_calls"
