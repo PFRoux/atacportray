@@ -1,0 +1,5 @@
+name: gtf_to_rose_annotation
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12

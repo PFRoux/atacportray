@@ -34,6 +34,8 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     macs3_gsize       // value:   e.g. 'hs'
     ch_motifs         // channel: path(motifs.jaspar)  (HOCOMOCO v11)
     run_rose          // value:   boolean
+    rose_genome       // value:   e.g. HG38
+    ch_rose_annotation // channel: path(rose_refseq.ucsc) or []
     rose_stitch       // value:   e.g. 12500
     rose_tss          // value:   e.g. 2500
     run_tobias        // value:   boolean
@@ -141,13 +143,13 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
         .mix(BED_SLOP.out.versions)
 
     //
-    // Super-enhancers with ROSE (-g HG38 -s 12500 -t 2500)
+    // Super-enhancers with ROSE (-g/--custom annotation -s 12500 -t 2500)
     //
     ch_super_enhancers = Channel.empty()
     if ( run_rose ) {
         ch_rose_in = MACS3_CALLPEAK.out.peak.join( ch_bam_bai )
             .map { meta, peak, bam, bai -> [ meta, peak, bam, bai ] }
-        ROSE ( ch_rose_in, 'HG38', rose_stitch, rose_tss )
+        ROSE ( ch_rose_in, rose_genome, ch_rose_annotation, rose_stitch, rose_tss )
         ch_super_enhancers = ROSE.out.super_enhancers
         ch_versions = ch_versions.mix(ROSE.out.versions)
     }

@@ -21,6 +21,7 @@ include { GATK4_CREATESEQUENCEDICTIONARY} from '../modules/nf-core/gatk4/creates
 include { GUNZIP                        } from '../modules/nf-core/gunzip/main'
 include { FASTQ_CONCAT                  } from '../modules/local/fastq_concat/main'
 include { GTF_TO_TSS_BED                } from '../modules/local/gtf_to_tss_bed/main'
+include { GTF_TO_ROSE_ANNOTATION        } from '../modules/local/gtf_to_rose_annotation/main'
 include { BEDTOOLS_INTERSECT as FILTER_BAM_OUTSIDE_PEAKS } from '../modules/nf-core/bedtools/intersect/main'
 include { SAMTOOLS_INDEX as INDEX_CNV_BAM                } from '../modules/nf-core/samtools/index/main'
 
@@ -136,6 +137,12 @@ workflow ATACPORTRAY {
         channel.value([ [id:'vep'], file(ref_vep_cache) ]) :
         channel.value([[:], []])
     ch_tss_regions = channel.empty()
+    ch_rose_annotation = channel.value([])
+    if ( params.gtf ) {
+        GTF_TO_ROSE_ANNOTATION ( channel.fromPath(params.gtf, checkIfExists: true) )
+        ch_rose_annotation = GTF_TO_ROSE_ANNOTATION.out.annotation
+        ch_versions = ch_versions.mix(GTF_TO_ROSE_ANNOTATION.out.versions)
+    }
     if ( params.run_tss_profile ) {
         if ( params.tss_bed ) {
             ch_tss_regions = channel.fromPath(params.tss_bed, checkIfExists: true)
@@ -186,6 +193,8 @@ workflow ATACPORTRAY {
             params.macs_gsize,
             ch_motifs,
             params.run_epigenome,        // run_rose gate (ROSE always on within epigenome)
+            params.rose_genome,
+            ch_rose_annotation,
             params.rose_stitch,
             params.rose_tss,
             params.run_footprinting,

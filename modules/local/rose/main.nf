@@ -11,6 +11,7 @@ process ROSE {
     input:
     tuple val(meta), path(peaks), path(bam), path(bai)
     val   genome_build
+    path  annotation
     val   stitch
     val   tss_exclusion
 
@@ -36,14 +37,18 @@ process ROSE {
     # output prefix from this filename up to the first dot.
     cp -L $peaks ${prefix}_peaks.bed
 
-    # The image ships the UCSC refseq annotation next to the ROSE install. ROSE's
-    # built-in genome table is resolved relative to \$PWD, so pass the shipped
-    # file explicitly with --custom instead of -g.
+    # Prefer the user-supplied GTF converted to ROSE's UCSC/refSeq-like format.
+    # Fall back to the annotation bundled with the ROSE image only when no GTF
+    # annotation was provided by the pipeline.
     ROSE_HOME=\$(dirname \$(dirname \$(readlink -f \$(command -v ROSE_main.py))))
     GENOME_LC=\$(echo "${genome_build}" | tr '[:upper:]' '[:lower:]')
-    ANNOT="\${ROSE_HOME}/annotation/\${GENOME_LC}_refseq.ucsc"
+    if [ -s "$annotation" ]; then
+        ANNOT="$annotation"
+    else
+        ANNOT="\${ROSE_HOME}/annotation/\${GENOME_LC}_refseq.ucsc"
+    fi
     if [ ! -s "\$ANNOT" ]; then
-        echo "ERROR: ROSE annotation for build '${genome_build}' not found at \$ANNOT" >&2
+        echo "ERROR: ROSE annotation not found at \$ANNOT" >&2
         echo "Available: \$(ls \${ROSE_HOME}/annotation/ 2>/dev/null | tr '\\n' ' ')" >&2
         exit 1
     fi

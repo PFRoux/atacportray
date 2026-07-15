@@ -32,7 +32,11 @@ input:
         pattern: "*.bai"
   - genome_build:
       type: string
-      description: Genome build label for ROSE (e.g. HG38)
+      description: Genome build label for ROSE fallback annotation (e.g. HG38)
+  - annotation:
+      type: file
+      description: Optional ROSE-compatible UCSC/refSeq-like annotation generated from the input GTF. If empty, ROSE uses its bundled genome annotation.
+      pattern: "*.ucsc"
   - stitch:
       type: integer
       description: Stitching distance in bp (notebook 12500)

@@ -44,6 +44,9 @@ input:
   - ch_tss_regions:
       type: file
       description: Optional TSS BED used for deepTools metaprofiles
+  - ch_rose_annotation:
+      type: file
+      description: Optional ROSE-compatible UCSC/refSeq-like annotation generated from the input GTF
 output:
   - bam:
       type: file
