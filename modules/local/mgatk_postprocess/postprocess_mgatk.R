@@ -223,27 +223,35 @@ for (path in coverage_files) {
 coverage_df <- if (length(coverage_list)) do.call(rbind, coverage_list) else data.frame(sample = character(), position = integer(), coverage = numeric())
 write.table(coverage_df, "mgatk_mt_coverage.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
 
-cat("# id: atacportray_mgatk_mt_coverage\n# section_name: mgatk mitochondrial coverage\n# description: Per-position mitochondrial coverage reported by mgatk.\n# plot_type: linegraph\n# pconfig:\n#   id: atacportray_mgatk_mt_coverage\n#   title: mgatk mitochondrial coverage\n#   xlab: MT position\n#   ylab: Coverage\n", file = "mgatk_mt_coverage_mqc.tsv")
-cat('id: "atacportray_mgatk_mt_coverage_circular"\nsection_name: "mgatk circular mitochondrial coverage"\ndescription: "Circular representation of per-position mitochondrial coverage reported by mgatk."\nplot_type: "html"\ndata: |\n', file = "mgatk_mt_coverage_circular_mqc.yaml")
+cat("# id: atacportray_mgatk_mt_coverage\n# section_name: mgatk mitochondrial coverage\n# description: Per-position mitochondrial coverage reported by mgatk, normalized to each sample mean coverage.\n# plot_type: linegraph\n# pconfig:\n#   id: atacportray_mgatk_mt_coverage\n#   title: mgatk mitochondrial coverage\n#   xlab: MT position\n#   ylab: Coverage / sample mean coverage\n", file = "mgatk_mt_coverage_mqc.tsv")
+cat('id: "atacportray_mgatk_mt_coverage_circular"\nsection_name: "mgatk circular mitochondrial coverage"\ndescription: "Circular representation of per-position mitochondrial coverage reported by mgatk, normalized to each sample mean coverage."\nplot_type: "html"\ndata: |\n', file = "mgatk_mt_coverage_circular_mqc.yaml")
 if (nrow(coverage_df)) {
     samples <- unique(coverage_df$sample)
     positions <- sort(unique(coverage_df$position))
-    wide <- matrix(0, nrow = length(samples), ncol = length(positions), dimnames = list(samples, positions))
+    wide <- matrix(NA_real_, nrow = length(samples), ncol = length(positions), dimnames = list(samples, positions))
     for (i in seq_len(nrow(coverage_df))) {
         wide[coverage_df$sample[i], as.character(coverage_df$position[i])] <- coverage_df$coverage[i]
     }
-    write.table(wide, "mgatk_mt_coverage_mqc.tsv", sep = "\t", quote = FALSE, append = TRUE, col.names = FALSE)
+    norm_wide <- wide
+    for (sample in rownames(norm_wide)) {
+        sample_mean <- mean(norm_wide[sample, ], na.rm = TRUE)
+        if (is.finite(sample_mean) && sample_mean > 0) {
+            norm_wide[sample, ] <- norm_wide[sample, ] / sample_mean
+        }
+    }
+    write.table(norm_wide, "mgatk_mt_coverage_mqc.tsv", sep = "\t", quote = FALSE, append = TRUE, col.names = FALSE, na = "")
 
     pdf("mgatk_mt_coverage_circular.pdf", width = 7, height = 7)
     par(mar = c(1, 1, 3, 1))
     plot.new()
     plot.window(xlim = c(-1.2, 1.2), ylim = c(-1.2, 1.2), asp = 1)
-    title("Circular mitochondrial coverage")
+    title("Circular mitochondrial coverage (sample-normalized)")
     theta <- 2 * pi * (positions - min(positions)) / max(1, diff(range(positions)))
     cols <- grDevices::rainbow(length(samples))
-    max_cov <- max(wide, na.rm = TRUE)
+    max_cov <- stats::quantile(as.numeric(norm_wide), probs = 0.99, na.rm = TRUE)
+    if (!is.finite(max_cov) || max_cov <= 0) max_cov <- max(norm_wide, na.rm = TRUE)
     for (i in seq_along(samples)) {
-        radius <- 0.35 + 0.6 * (wide[i, ] / max(max_cov, 1))
+        radius <- 0.35 + 0.6 * (pmin(norm_wide[i, ], max_cov) / max(max_cov, 1))
         lines(radius * cos(theta), radius * sin(theta), col = cols[i], lwd = 1)
     }
     legend("bottom", legend = samples, col = cols, lwd = 2, bty = "n", cex = 0.7)
@@ -256,13 +264,23 @@ if (nrow(coverage_df)) {
     line_tags <- character()
     label_tags <- character()
     for (i in seq_along(samples)) {
-        radius <- 120 + 190 * (wide[i, ] / max(max_cov, 1))
+        radius <- 120 + 190 * (pmin(norm_wide[i, ], max_cov) / max(max_cov, 1))
         x <- center + radius * cos(theta_svg)
         y <- center + radius * sin(theta_svg)
-        points <- paste(sprintf("%.1f,%.1f", x, y), collapse = " ")
+        valid <- is.finite(x) & is.finite(y)
+        runs <- split(seq_along(valid), cumsum(c(TRUE, diff(valid) != 0)))
+        sample_lines <- character()
+        for (run in runs) {
+            if (!valid[run[1]] || length(run) < 2) next
+            points <- paste(sprintf("%.1f,%.1f", x[run], y[run]), collapse = " ")
+            sample_lines <- c(
+                sample_lines,
+                sprintf('<polyline points="%s" fill="none" stroke="%s" stroke-width="2" stroke-opacity="0.85"/>', points, cols[i])
+            )
+        }
         line_tags <- c(
             line_tags,
-            sprintf('<polyline points="%s" fill="none" stroke="%s" stroke-width="2" stroke-opacity="0.85"/>', points, cols[i])
+            sample_lines
         )
         label_tags <- c(
             label_tags,
@@ -277,7 +295,7 @@ if (nrow(coverage_df)) {
         guide_tags,
         '<circle cx="340" cy="340" r="4" fill="#555"/>',
         paste(line_tags, collapse = "\n"),
-        '<text x="340" y="34" text-anchor="middle" font-size="20" font-family="sans-serif">Circular mitochondrial coverage</text>',
+        '<text x="340" y="34" text-anchor="middle" font-size="20" font-family="sans-serif">Circular mitochondrial coverage (sample-normalized)</text>',
         '</svg>',
         '<div style="font-size:0.9rem;margin-top:0.5rem;">',
         paste(label_tags, collapse = ""),
