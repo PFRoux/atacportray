@@ -32,11 +32,51 @@ process TOBIAS_BINDETECT {
     mkdir -p .matplotlib
     export MPLCONFIGDIR="\${PWD}/.matplotlib"
 
+    python - <<'PY'
+    import pyBigWig
+    from pathlib import Path
+
+    peaks = Path("${peaks}")
+    filtered = Path("bindetect_peaks.filtered.bed")
+    bw = pyBigWig.open("${footprints}")
+    chrom_sizes = bw.chroms()
+    bw.close()
+
+    kept = 0
+    dropped = 0
+    with peaks.open() as handle, filtered.open("w") as out:
+        for line in handle:
+            if not line.strip() or line.startswith("#"):
+                continue
+            fields = line.rstrip("\\n").split("\\t")
+            if len(fields) < 3:
+                dropped += 1
+                continue
+            chrom = fields[0]
+            try:
+                start = int(fields[1])
+                end = int(fields[2])
+            except ValueError:
+                dropped += 1
+                continue
+            chrom_size = chrom_sizes.get(chrom)
+            if chrom_size is None or start < 0 or end <= start or end > chrom_size:
+                dropped += 1
+                continue
+            out.write(line)
+            kept += 1
+
+    if kept == 0:
+        raise SystemExit(f"No peaks from {peaks} overlap chromosomes available in ${footprints}; dropped {dropped} regions.")
+    if dropped:
+        print(f"Filtered {dropped} peak regions absent from or outside ${footprints}; kept {kept} regions for TOBIAS BINDetect.")
+    PY
+
     TOBIAS BINDetect \\
         --motifs $motifs \\
         --signals $footprints \\
         --genome $fasta \\
-        --peaks $peaks \\
+        --peaks bindetect_peaks.filtered.bed \\
         --outdir bindetect \\
         --cores $task.cpus \\
         $cond \\
