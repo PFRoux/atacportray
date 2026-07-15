@@ -65,14 +65,15 @@ write_empty <- function() {
 
 extract_af_from_se <- function(obj, sample_name) {
     if (!requireNamespace("SummarizedExperiment", quietly = TRUE)) return(NULL)
-    assays <- SummarizedExperiment::assays(obj)
+    assays <- tryCatch(SummarizedExperiment::assays(obj), error = function(e) NULL)
+    if (is.null(assays)) return(NULL)
     assay_names <- names(assays)
     cov_name <- assay_names[grepl("^coverage$|coverage", assay_names, ignore.case = TRUE)][1]
     if (is.na(cov_name)) return(NULL)
     cov <- as.matrix(assays[[cov_name]])
     if (ncol(cov) == 0) return(NULL)
 
-    rr <- SummarizedExperiment::rowRanges(obj)
+    rr <- tryCatch(SummarizedExperiment::rowRanges(obj), error = function(e) NULL)
     pos <- tryCatch(as.integer(GenomicRanges::start(rr)), error = function(e) seq_len(nrow(cov)))
     ref <- tryCatch(as.character(S4Vectors::mcols(rr)$refAllele), error = function(e) rep("N", nrow(cov)))
     if (length(ref) != nrow(cov)) ref <- rep("N", nrow(cov))
