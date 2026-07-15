@@ -20,14 +20,6 @@ input:
       type: file
       description: mgatk per-position coverage files
       pattern: "*.coverage.txt.gz"
-  - variant_stats:
-      type: file
-      description: mgatk variant statistics files
-      pattern: "*.variant_stats.tsv.gz"
-  - vmr:
-      type: file
-      description: mgatk VMR strand files
-      pattern: "*.vmr_strand.tsv.gz"
   - min_af:
       type: number
       description: Minimum allele fraction for variant detection

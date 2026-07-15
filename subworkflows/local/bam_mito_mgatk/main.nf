@@ -41,8 +41,6 @@ workflow BAM_MITO_MGATK {
         MGATK_POSTPROCESS (
             MGATK.out.rds.collect(),
             MGATK.out.coverage.collect(),
-            MGATK.out.variant_stats.collect(),
-            MGATK.out.vmr.collect(),
             min_af,
             min_vmr,
             min_sd

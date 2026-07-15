@@ -10,8 +10,6 @@ process MGATK_POSTPROCESS {
     input:
     path rds
     path coverage
-    path variant_stats
-    path vmr
     val min_af
     val min_vmr
     val min_sd
@@ -37,8 +35,6 @@ process MGATK_POSTPROCESS {
     Rscript ${moduleDir}/postprocess_mgatk.R \\
         --rds "${rds}" \\
         --coverage "${coverage}" \\
-        --variant-stats "${variant_stats}" \\
-        --vmr "${vmr}" \\
         --min-af ${min_af} \\
         --min-vmr ${min_vmr} \\
         --min-sd ${min_sd}

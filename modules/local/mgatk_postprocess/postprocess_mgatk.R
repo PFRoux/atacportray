@@ -12,9 +12,29 @@ split_paths <- function(x) {
     unlist(strsplit(x, "\\s+"))
 }
 
-read_table <- function(path) {
+open_text <- function(path) {
+    if (grepl("\\.gz$", path)) gzfile(path, "rt") else file(path, "rt")
+}
+
+read_table <- function(path, header = TRUE) {
     if (!file.exists(path) || file.info(path)$size == 0) return(NULL)
-    tryCatch(read.delim(path, check.names = FALSE), error = function(e) NULL)
+    con <- open_text(path)
+    on.exit(close(con), add = TRUE)
+    first_line <- tryCatch(readLines(con, n = 1, warn = FALSE), error = function(e) character())
+    if (!length(first_line)) return(NULL)
+    sep <- if (grepl(",", first_line) && !grepl("\t", first_line)) "," else "\t"
+    tryCatch(
+        read.table(
+            path,
+            sep = sep,
+            header = header,
+            check.names = FALSE,
+            comment.char = "",
+            quote = "",
+            stringsAsFactors = FALSE
+        ),
+        error = function(e) NULL
+    )
 }
 
 clean_sample <- function(path, suffix) {
@@ -22,10 +42,17 @@ clean_sample <- function(path, suffix) {
     sub(suffix, "", x)
 }
 
+clean_sample_value <- function(x) {
+    x <- basename(as.character(x))
+    x <- sub("\\.coverage\\.txt\\.gz$", "", x)
+    x <- sub("\\.coverage\\.txt$", "", x)
+    x <- sub("\\.bam$", "", x)
+    x <- sub("\\.md$", "", x)
+    x
+}
+
 rds_files <- split_paths(get_arg("--rds"))
 coverage_files <- split_paths(get_arg("--coverage"))
-variant_files <- split_paths(get_arg("--variant-stats"))
-vmr_files <- split_paths(get_arg("--vmr"))
 min_af <- as.numeric(get_arg("--min-af", "0.05"))
 min_vmr <- as.numeric(get_arg("--min-vmr", "0.01"))
 min_sd <- as.numeric(get_arg("--min-sd", "0.05"))
@@ -149,23 +176,47 @@ if (is.null(af_matrix)) {
 
 summary_df <- read.delim("mgatk_variant_summary.tsv")
 cat("# id: atacportray_mgatk_postprocess\n# section_name: mgatk heteroplasmy summary\n# description: High-confidence mitochondrial heteroplasmy calls after allele-fraction, VMR and variability filtering.\n# plot_type: table\n", file = "mgatk_postprocess_mqc.tsv")
-write.table(summary_df, "mgatk_postprocess_mqc.tsv", sep = "\t", row.names = FALSE, quote = FALSE, append = TRUE)
+cat(paste(names(summary_df), collapse = "\t"), "\n", file = "mgatk_postprocess_mqc.tsv", append = TRUE, sep = "")
+write.table(summary_df, "mgatk_postprocess_mqc.tsv", sep = "\t", row.names = FALSE, quote = FALSE, append = TRUE, col.names = FALSE)
 
 coverage_list <- list()
 for (path in coverage_files) {
-    dat <- read_table(path)
+    dat <- read_table(path, header = FALSE)
     if (is.null(dat) || !nrow(dat)) next
+
+    first_row <- tolower(as.character(unlist(dat[1, , drop = TRUE])))
+    has_header <- any(grepl("pos|position|site|sample|cell|barcode|coverage|depth|cov", first_row))
+    if (has_header) {
+        names(dat) <- make.names(as.character(unlist(dat[1, , drop = TRUE])), unique = TRUE)
+        dat <- dat[-1, , drop = FALSE]
+    }
+
     sample <- clean_sample(path, "\\.coverage\\.txt\\.gz$")
-    if (ncol(dat) == 1) {
+    sample_vec <- rep(clean_sample_value(sample), nrow(dat))
+
+    if (ncol(dat) >= 3 && !has_header) {
+        pos <- dat[[1]]
+        sample_vec <- clean_sample_value(dat[[2]])
+        cov <- dat[[3]]
+    } else if (ncol(dat) == 1) {
         cov <- dat[[1]]
         pos <- seq_along(cov)
     } else {
         pos_col <- grep("pos|position|site", names(dat), ignore.case = TRUE, value = TRUE)[1]
+        sample_col <- grep("sample|cell|barcode", names(dat), ignore.case = TRUE, value = TRUE)[1]
         cov_col <- grep("coverage|depth|cov", names(dat), ignore.case = TRUE, value = TRUE)[1]
         pos <- if (!is.na(pos_col)) dat[[pos_col]] else seq_len(nrow(dat))
+        if (!is.na(sample_col)) sample_vec <- clean_sample_value(dat[[sample_col]])
         cov <- if (!is.na(cov_col)) dat[[cov_col]] else dat[[ncol(dat)]]
     }
-    coverage_list[[sample]] <- data.frame(sample = sample, position = as.integer(pos), coverage = as.numeric(cov))
+
+    parsed <- data.frame(
+        sample = sample_vec,
+        position = suppressWarnings(as.integer(pos)),
+        coverage = suppressWarnings(as.numeric(cov))
+    )
+    parsed <- parsed[!is.na(parsed$position) & !is.na(parsed$coverage), , drop = FALSE]
+    if (nrow(parsed)) coverage_list[[path]] <- parsed
 }
 
 coverage_df <- if (length(coverage_list)) do.call(rbind, coverage_list) else data.frame(sample = character(), position = integer(), coverage = numeric())
