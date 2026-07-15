@@ -19,6 +19,7 @@ include { BWA_INDEX                     } from '../modules/nf-core/bwa/index/mai
 include { SAMTOOLS_FAIDX                } from '../modules/nf-core/samtools/faidx/main'
 include { GATK4_CREATESEQUENCEDICTIONARY} from '../modules/nf-core/gatk4/createsequencedictionary/main'
 include { GUNZIP                        } from '../modules/nf-core/gunzip/main'
+include { FASTQ_CONCAT                  } from '../modules/local/fastq_concat/main'
 include { GTF_TO_TSS_BED                } from '../modules/local/gtf_to_tss_bed/main'
 include { BEDTOOLS_INTERSECT as FILTER_BAM_OUTSIDE_PEAKS } from '../modules/nf-core/bedtools/intersect/main'
 include { SAMTOOLS_INDEX as INDEX_CNV_BAM                } from '../modules/nf-core/samtools/index/main'
@@ -150,10 +151,13 @@ workflow ATACPORTRAY {
     //
     // Read trimming (fastp)
     //
+    FASTQ_CONCAT ( ch_samplesheet )
+    ch_input_reads = FASTQ_CONCAT.out.reads
+
     if ( params.skip_trimming ) {
-        ch_trimmed = ch_samplesheet
+        ch_trimmed = ch_input_reads
     } else {
-        ch_fastp_in = ch_samplesheet.map { meta, reads -> [ meta, reads, [] ] }
+        ch_fastp_in = ch_input_reads.map { meta, reads -> [ meta, reads, [] ] }
         FASTP ( ch_fastp_in, false, false, false )
         ch_trimmed = FASTP.out.reads
         ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.json.collect { it[1] }.ifEmpty([]))

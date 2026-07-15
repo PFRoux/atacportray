@@ -1,0 +1,30 @@
+name: "fastq_concat"
+description: Concatenate multiple sequencing runs/lanes for each sample before downstream processing
+keywords:
+  - fastq
+  - concat
+  - lanes
+tools:
+  - "cat":
+      description: Concatenate files and print on the standard output
+      homepage: "https://www.gnu.org/software/coreutils/"
+      documentation: "https://www.gnu.org/software/coreutils/manual/html_node/cat-invocation.html"
+      licence: ["GPL-3.0-or-later"]
+input:
+  - reads:
+      type: file
+      description: One or more FASTQ files for a sample. Paired-end files must be ordered R1/R2 per lane.
+      pattern: "*.f*q.gz"
+output:
+  reads:
+    - "*.fastq.gz":
+        type: file
+        description: Concatenated per-sample FASTQ files
+        pattern: "*.fastq.gz"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@PFRoux"
