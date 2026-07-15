@@ -23,7 +23,7 @@ process MGATK_POSTPROCESS {
     path "mgatk_postprocess_mqc.tsv"         , emit: mqc
     path "mgatk_mt_coverage.tsv"             , emit: coverage_table
     path "mgatk_mt_coverage_mqc.tsv"         , emit: coverage_mqc
-    path "mgatk_mt_coverage_circular_mqc.html", emit: coverage_circular_mqc
+    path "mgatk_mt_coverage_circular_mqc.yaml", emit: coverage_circular_mqc
     path "mgatk_mt_coverage_circular.pdf"    , emit: coverage_circular, optional: true
     path "mgatk_heteroplasmy_heatmap.pdf"    , emit: heatmap, optional: true
     path "mgatk_heteroplasmy_pca.pdf"        , emit: pca, optional: true
@@ -93,12 +93,13 @@ process MGATK_POSTPROCESS {
     #   ylab: Coverage
     END_COV_MQC
 
-    cat <<-END_CIRCULAR_MQC > mgatk_mt_coverage_circular_mqc.html
-    # id: atacportray_mgatk_mt_coverage_circular
-    # section_name: mgatk circular mitochondrial coverage
-    # description: Circular representation of per-position mitochondrial coverage reported by mgatk.
-    # plot_type: html
-    <p>No mitochondrial coverage data available.</p>
+    cat <<-END_CIRCULAR_MQC > mgatk_mt_coverage_circular_mqc.yaml
+    id: "atacportray_mgatk_mt_coverage_circular"
+    section_name: "mgatk circular mitochondrial coverage"
+    description: "Circular representation of per-position mitochondrial coverage reported by mgatk."
+    plot_type: "html"
+    data: |
+      <p>No mitochondrial coverage data available.</p>
     END_CIRCULAR_MQC
 
     cat <<-END_VERSIONS > versions.yml

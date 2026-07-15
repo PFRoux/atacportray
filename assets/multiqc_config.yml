@@ -3,9 +3,11 @@ report_comment: >
   analysis pipeline.
 report_section_order:
   "atacportray-atacportray-summary":
-    order: -1000
+    order: -1002
   software_versions:
-    order: -990
+    order: -1001
+  "atacportray-atacportray-methods-description":
+    order: -1000
   fastp:
     order: -900
   bowtie2:
@@ -30,8 +32,6 @@ report_section_order:
     order: -290
   atacportray_mgatk_mt_coverage_circular:
     order: -280
-  "atacportray-atacportray-methods-description":
-    order: 900
 
 export_plots: true
 

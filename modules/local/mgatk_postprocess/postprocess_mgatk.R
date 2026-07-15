@@ -172,7 +172,7 @@ coverage_df <- if (length(coverage_list)) do.call(rbind, coverage_list) else dat
 write.table(coverage_df, "mgatk_mt_coverage.tsv", sep = "\t", row.names = FALSE, quote = FALSE)
 
 cat("# id: atacportray_mgatk_mt_coverage\n# section_name: mgatk mitochondrial coverage\n# description: Per-position mitochondrial coverage reported by mgatk.\n# plot_type: linegraph\n# pconfig:\n#   id: atacportray_mgatk_mt_coverage\n#   title: mgatk mitochondrial coverage\n#   xlab: MT position\n#   ylab: Coverage\n", file = "mgatk_mt_coverage_mqc.tsv")
-cat("# id: atacportray_mgatk_mt_coverage_circular\n# section_name: mgatk circular mitochondrial coverage\n# description: Circular representation of per-position mitochondrial coverage reported by mgatk.\n# plot_type: html\n", file = "mgatk_mt_coverage_circular_mqc.html")
+cat('id: "atacportray_mgatk_mt_coverage_circular"\nsection_name: "mgatk circular mitochondrial coverage"\ndescription: "Circular representation of per-position mitochondrial coverage reported by mgatk."\nplot_type: "html"\ndata: |\n', file = "mgatk_mt_coverage_circular_mqc.yaml")
 if (nrow(coverage_df)) {
     samples <- unique(coverage_df$sample)
     positions <- sort(unique(coverage_df$position))
@@ -232,7 +232,7 @@ if (nrow(coverage_df)) {
         '</div>',
         '</div>'
     )
-    cat(html, file = "mgatk_mt_coverage_circular_mqc.html", append = TRUE)
+    cat(paste0("  ", gsub("\n", "\n  ", html), "\n"), file = "mgatk_mt_coverage_circular_mqc.yaml", append = TRUE)
 } else {
-    cat("<p>No mitochondrial coverage data available.</p>\n", file = "mgatk_mt_coverage_circular_mqc.html", append = TRUE)
+    cat("  <p>No mitochondrial coverage data available.</p>\n", file = "mgatk_mt_coverage_circular_mqc.yaml", append = TRUE)
 }

@@ -69,10 +69,10 @@ output:
         description: MultiQC custom-content mitochondrial coverage line plot
         pattern: "mgatk_mt_coverage_mqc.tsv"
   coverage_circular_mqc:
-    - "mgatk_mt_coverage_circular_mqc.html":
+    - "mgatk_mt_coverage_circular_mqc.yaml":
         type: file
         description: MultiQC custom-content circular mitochondrial coverage plot
-        pattern: "mgatk_mt_coverage_circular_mqc.html"
+        pattern: "mgatk_mt_coverage_circular_mqc.yaml"
   coverage_circular:
     - "mgatk_mt_coverage_circular.pdf":
         type: file
