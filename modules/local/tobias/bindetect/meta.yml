@@ -22,6 +22,9 @@ input:
         type: file
         description: One or more footprint score bigWigs from TOBIAS ScoreBigwig
         pattern: "*_footprints.bw"
+    - cond_names:
+        type: string
+        description: Space-separated condition labels, one per footprint signal, passed to TOBIAS BINDetect --cond_names.
   - - motifs:
         type: file
         description: Motif database (HOCOMOCO v11) in JASPAR or MEME format

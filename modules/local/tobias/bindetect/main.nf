@@ -8,7 +8,7 @@ process TOBIAS_BINDETECT {
         'quay.io/biocontainers/tobias:0.16.1--py39h24fbfe6_1' }"
 
     input:
-    tuple val(meta), path(footprints)
+    tuple val(meta), path(footprints), val(cond_names)
     path motifs
     tuple val(meta2), path(fasta)
     tuple val(meta3), path(peaks)
@@ -27,7 +27,7 @@ process TOBIAS_BINDETECT {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def cond   = meta.condition ? "--cond_names ${meta.condition}" : ''
+    def cond   = cond_names ? "--cond_names ${cond_names}" : ''
     """
     mkdir -p .matplotlib
     export MPLCONFIGDIR="\${PWD}/.matplotlib"
@@ -38,9 +38,12 @@ process TOBIAS_BINDETECT {
 
     peaks = Path("${peaks}")
     filtered = Path("bindetect_peaks.filtered.bed")
-    bw = pyBigWig.open("${footprints}")
-    chrom_sizes = bw.chroms()
-    bw.close()
+    footprint_paths = "${footprints}".split()
+    chrom_sizes_by_file = {}
+    for footprint in footprint_paths:
+        bw = pyBigWig.open(footprint)
+        chrom_sizes_by_file[footprint] = bw.chroms()
+        bw.close()
 
     kept = 0
     dropped = 0
@@ -59,17 +62,25 @@ process TOBIAS_BINDETECT {
             except ValueError:
                 dropped += 1
                 continue
-            chrom_size = chrom_sizes.get(chrom)
-            if chrom_size is None or start < 0 or end <= start or end > chrom_size:
+            if start < 0 or end <= start:
+                dropped += 1
+                continue
+            valid = True
+            for footprint, chrom_sizes in chrom_sizes_by_file.items():
+                chrom_size = chrom_sizes.get(chrom)
+                if chrom_size is None or end > chrom_size:
+                    valid = False
+                    break
+            if not valid:
                 dropped += 1
                 continue
             out.write(line)
             kept += 1
 
     if kept == 0:
-        raise SystemExit(f"No peaks from {peaks} overlap chromosomes available in ${footprints}; dropped {dropped} regions.")
+        raise SystemExit(f"No peaks from {peaks} overlap chromosomes available in all footprint bigWigs; dropped {dropped} regions.")
     if dropped:
-        print(f"Filtered {dropped} peak regions absent from or outside ${footprints}; kept {kept} regions for TOBIAS BINDetect.")
+        print(f"Filtered {dropped} peak regions absent from or outside one or more footprint bigWigs; kept {kept} regions for TOBIAS BINDetect.")
     PY
 
     TOBIAS BINDetect \\
