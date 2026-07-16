@@ -344,6 +344,24 @@
                     "default": 500,
                     "description": "Number of base pairs added on each side of consensus peaks for VCF filtering and QDNAseq peak masking.",
                     "fa_icon": "fas fa-expand-arrows-alt"
+                },
+                "run_deseq2_qc": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Run DESeq2 normalization/differential accessibility QC on raw consensus peak counts when sample conditions are available.",
+                    "fa_icon": "fas fa-chart-bar"
+                },
+                "deseq2_min_count": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Minimum row sum required to keep a consensus peak for DESeq2 normalization, PCA and heatmap QC.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "deseq2_top_features": {
+                    "type": "integer",
+                    "default": 50,
+                    "description": "Number of most variable normalized consensus peaks shown in the exploratory heatmap.",
+                    "fa_icon": "fas fa-th"
                 }
             }
         },

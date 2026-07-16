@@ -1,0 +1,40 @@
+nextflow_process {
+
+    name "Test Process ATAC_DESEQ2_QC"
+    script "../main.nf"
+    process "ATAC_DESEQ2_QC"
+
+    tag "modules"
+    tag "modules_local"
+    tag "atac_deseq2_qc"
+
+    test("atac_deseq2_qc - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'consensus_peaks' ],
+                    file("consensus_peaks.raw_counts.tsv"),
+                    [
+                        [ sample:'S1', condition:'High', patient:'P1' ],
+                        [ sample:'S2', condition:'Low', patient:'P2' ]
+                    ]
+                ]
+                input[1] = 10
+                input[2] = 50
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.results },
+                { assert process.out.normalized_counts },
+                { assert process.out.summary },
+                { assert process.out.mqc },
+                { assert process.out.versions }
+            )
+        }
+    }
+}

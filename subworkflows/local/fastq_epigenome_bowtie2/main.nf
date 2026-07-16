@@ -17,6 +17,7 @@ include { CONSENSUS_PEAKS      } from '../../../modules/local/consensus_peaks/ma
 include { CONSENSUS_SUPER_ENHANCERS } from '../../../modules/local/consensus_super_enhancers/main'
 include { BEDTOOLS_MULTICOV_COUNTS as PEAKS_MULTICOV_COUNTS } from '../../../modules/local/bedtools_multicov_counts/main'
 include { BEDTOOLS_MULTICOV_COUNTS as SUPER_ENHANCERS_MULTICOV_COUNTS } from '../../../modules/local/bedtools_multicov_counts/main'
+include { ATAC_DESEQ2_QC      } from '../../../modules/local/atac_deseq2_qc/main'
 include { TOBIAS_ATACORRECT    } from '../../../modules/local/tobias/atacorrect/main'
 include { TOBIAS_SCOREBIGWIG   } from '../../../modules/local/tobias/scorebigwig/main'
 include { TOBIAS_BINDETECT     } from '../../../modules/local/tobias/bindetect/main'
@@ -49,6 +50,9 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     tss_before        // value:   e.g. 2000
     tss_after         // value:   e.g. 2000
     tss_binsize       // value:   e.g. 10
+    run_deseq2_qc     // value:   boolean
+    deseq2_min_count  // value:   e.g. 10
+    deseq2_top_features // value: e.g. 50
 
     main:
     ch_versions      = Channel.empty()
@@ -153,6 +157,29 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
         .map { meta, bed, sample_names, bams, bais -> [ [id:'consensus_peaks'], bed, sample_names, bams, bais ] }
     PEAKS_MULTICOV_COUNTS ( ch_peak_counts_in )
     ch_count_tables = ch_count_tables.mix(PEAKS_MULTICOV_COUNTS.out.counts)
+    if ( run_deseq2_qc ) {
+        ch_deseq2_meta = ch_bam_bai
+            .collect(flat: false)
+            .map { rows ->
+                def sorted = rows.sort { a, b -> a[0]['id'] <=> b[0]['id'] }
+                sorted.collect { row ->
+                    [
+                        sample: row[0]['id'],
+                        condition: row[0].containsKey('condition') ? row[0]['condition'] : 'NA',
+                        patient: row[0].containsKey('patient') ? row[0]['patient'] : 'NA'
+                    ]
+                }
+        }
+        ch_deseq2_in = PEAKS_MULTICOV_COUNTS.out.counts
+            .combine( ch_deseq2_meta )
+            .map { row ->
+                def sample_info = row[2..-1]
+                [ row[0], row[1], sample_info ]
+            }
+        ATAC_DESEQ2_QC ( ch_deseq2_in, deseq2_min_count, deseq2_top_features )
+        ch_multiqc_files = ch_multiqc_files.mix(ATAC_DESEQ2_QC.out.mqc)
+        ch_versions = ch_versions.mix(ATAC_DESEQ2_QC.out.versions)
+    }
     ch_versions = ch_versions
         .mix(CONSENSUS_PEAKS.out.versions)
         .mix(BED_SLOP.out.versions)

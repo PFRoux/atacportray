@@ -204,7 +204,10 @@ workflow ATACPORTRAY {
             ch_tss_regions,
             params.tss_profile_before,
             params.tss_profile_after,
-            params.tss_profile_binsize
+            params.tss_profile_binsize,
+            params.run_deseq2_qc,
+            params.deseq2_min_count,
+            params.deseq2_top_features
         )
         ch_epigenome_bam = FASTQ_EPIGENOME_BOWTIE2.out.bam
         ch_peak_regions  = FASTQ_EPIGENOME_BOWTIE2.out.peak_regions

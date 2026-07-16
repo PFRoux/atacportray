@@ -1,0 +1,70 @@
+name: "atac_deseq2_qc"
+description: Run DESeq2 normalization/differential accessibility and produce PCA/heatmap MultiQC custom content from consensus peak counts.
+keywords:
+  - atac-seq
+  - deseq2
+  - differential-accessibility
+  - pca
+  - heatmap
+  - multiqc
+tools:
+  - deseq2:
+      description: Differential gene expression analysis based on the negative binomial distribution.
+      homepage: "https://bioconductor.org/packages/DESeq2"
+      documentation: "https://bioconductor.org/packages/DESeq2"
+      doi: "10.1186/s13059-014-0550-8"
+      licence: ["LGPL-3.0-only"]
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing count matrix information
+    - counts:
+        type: file
+        description: Raw consensus peak count matrix produced by bedtools multicov
+        pattern: "*.raw_counts.tsv"
+    - sample_info:
+        type: list
+        description: Sample metadata maps containing sample, condition and patient fields
+  - min_count:
+      type: integer
+      description: Minimum row sum required to keep a peak for DESeq2/QC.
+  - top_features:
+      type: integer
+      description: Number of most variable peaks to use in the heatmap.
+output:
+  results:
+    - - meta:
+          type: map
+          description: Groovy Map containing count matrix information
+      - "atac_deseq2_results.tsv":
+          type: file
+          description: Pairwise DESeq2 results across conditions when the design is valid
+          pattern: "atac_deseq2_results.tsv"
+  normalized_counts:
+    - - meta:
+          type: map
+          description: Groovy Map containing count matrix information
+      - "atac_deseq2_normalized_counts.tsv":
+          type: file
+          description: DESeq2 size-factor normalized consensus peak counts
+          pattern: "atac_deseq2_normalized_counts.tsv"
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map containing count matrix information
+      - "atac_deseq2_summary.tsv":
+          type: file
+          description: Summary of whether DESeq2 differential testing was run or skipped
+          pattern: "atac_deseq2_summary.tsv"
+  mqc:
+    - "atac_deseq2_qc_mqc.yaml":
+        type: file
+        description: MultiQC custom content with PCA and heatmap plots
+        pattern: "atac_deseq2_qc_mqc.yaml"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@PFRoux"

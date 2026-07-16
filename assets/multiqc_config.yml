@@ -20,6 +20,8 @@ report_section_order:
     order: -590
   atacportray_tss_profile:
     order: -580
+  atacportray_deseq2_qc:
+    order: -570
   macs:
     order: -500
   atacportray_variant_calls:

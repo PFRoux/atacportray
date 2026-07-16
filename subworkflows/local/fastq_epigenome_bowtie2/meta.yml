@@ -19,6 +19,9 @@ components:
   - rose
   - nucleoatac
   - consensus/peaks
+  - consensus/super/enhancers
+  - bedtools/multicov/counts
+  - atac/deseq2/qc
   - tobias/atacorrect
   - tobias/scorebigwig
   - tobias/bindetect
@@ -60,6 +63,9 @@ output:
   - super_enhancers:
       type: file
       description: Optional ROSE super-enhancer outputs
+  - count_tables:
+      type: file
+      description: Raw count matrices for consensus peaks and consensus super-enhancers
   - nucleosomes:
       type: file
       description: Optional NucleoATAC nucleosome calls

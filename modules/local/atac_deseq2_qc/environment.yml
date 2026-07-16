@@ -1,0 +1,9 @@
+name: atac_deseq2_qc
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - conda-forge::r-base=4.4
+  - bioconda::bioconductor-deseq2
+  - conda-forge::r-ggplot2
+  - conda-forge::r-base64enc
