@@ -1,0 +1,41 @@
+name: "consensus_super_enhancers"
+description: Merge ROSE per-sample super-enhancer tables into a consensus BED interval set
+keywords:
+  - super-enhancers
+  - consensus
+  - rose
+  - atac-seq
+  - bedtools
+tools:
+  - bedtools:
+      description: "A powerful toolset for genome arithmetic"
+      homepage: "https://bedtools.readthedocs.io"
+      documentation: "https://bedtools.readthedocs.io"
+      doi: "10.1093/bioinformatics/btq033"
+      licence: ["MIT"]
+      identifier: "biotools:bedtools"
+input:
+  - - tables:
+        type: file
+        description: ROSE *_SuperStitched.table.txt files
+        pattern: "*_SuperStitched.table.txt"
+output:
+  bed:
+    - "consensus_super_enhancers.bed":
+        type: file
+        description: Merged consensus super-enhancer intervals
+        pattern: "consensus_super_enhancers.bed"
+  saf:
+    - "consensus_super_enhancers.saf":
+        type: file
+        description: Consensus super-enhancers in SAF format
+        pattern: "consensus_super_enhancers.saf"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@atacportray"
+maintainers:
+  - "@atacportray"

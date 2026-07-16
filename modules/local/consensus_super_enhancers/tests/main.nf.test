@@ -1,0 +1,29 @@
+nextflow_process {
+
+    name "Test Process CONSENSUS_SUPER_ENHANCERS"
+    script "../main.nf"
+    process "CONSENSUS_SUPER_ENHANCERS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "consensus_super_enhancers"
+
+    test("consensus_super_enhancers - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [ file("S1_peaks_SuperStitched.table.txt"), file("S2_peaks_SuperStitched.table.txt") ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.bed },
+                { assert process.out.saf },
+                { assert process.out.versions }
+            )
+        }
+    }
+}

@@ -1,0 +1,34 @@
+nextflow_process {
+
+    name "Test Process BEDTOOLS_MULTICOV_COUNTS"
+    script "../main.nf"
+    process "BEDTOOLS_MULTICOV_COUNTS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "bedtools_multicov_counts"
+
+    test("bedtools_multicov_counts - stub") {
+        options "-stub"
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'consensus_peaks' ],
+                    file("consensus_peaks.bed"),
+                    [ "S1", "S2" ],
+                    [ file("S1.bam"), file("S2.bam") ],
+                    [ file("S1.bam.bai"), file("S2.bam.bai") ]
+                ]
+                """
+            }
+        }
+        then {
+            assertAll(
+                { assert process.success },
+                { assert process.out.counts },
+                { assert process.out.versions }
+            )
+        }
+    }
+}

@@ -14,6 +14,9 @@ include { MACS3_CALLPEAK       } from '../../../modules/nf-core/macs3/callpeak/m
 include { ROSE                 } from '../../../modules/local/rose/main'
 include { NUCLEOATAC           } from '../../../modules/local/nucleoatac/main'
 include { CONSENSUS_PEAKS      } from '../../../modules/local/consensus_peaks/main'
+include { CONSENSUS_SUPER_ENHANCERS } from '../../../modules/local/consensus_super_enhancers/main'
+include { BEDTOOLS_MULTICOV_COUNTS as PEAKS_MULTICOV_COUNTS } from '../../../modules/local/bedtools_multicov_counts/main'
+include { BEDTOOLS_MULTICOV_COUNTS as SUPER_ENHANCERS_MULTICOV_COUNTS } from '../../../modules/local/bedtools_multicov_counts/main'
 include { TOBIAS_ATACORRECT    } from '../../../modules/local/tobias/atacorrect/main'
 include { TOBIAS_SCOREBIGWIG   } from '../../../modules/local/tobias/scorebigwig/main'
 include { TOBIAS_BINDETECT     } from '../../../modules/local/tobias/bindetect/main'
@@ -50,6 +53,7 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     main:
     ch_versions      = Channel.empty()
     ch_multiqc_files = Channel.empty()
+    ch_count_tables  = Channel.empty()
 
     //
     // Align with bowtie2 (ext.args: -N 0 --very-sensitive-local, set in modules.config)
@@ -138,9 +142,21 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     CONSENSUS_PEAKS ( MACS3_CALLPEAK.out.peak.collect{ it[1] } )
     ch_consensus_peaks = CONSENSUS_PEAKS.out.bed.map { bed -> [ [id:'consensus'], bed ] }
     BED_SLOP ( ch_consensus_peaks, ch_fai, peak_filter_slop )
+    ch_multicov_bams = ch_bam_bai
+        .collect(flat: false)
+        .map { rows ->
+            def sorted = rows.sort { a, b -> a[0]['id'] <=> b[0]['id'] }
+            [ sorted.collect { it[0]['id'] }, sorted.collect { it[1] }, sorted.collect { it[2] } ]
+        }
+    ch_peak_counts_in = ch_consensus_peaks
+        .combine( ch_multicov_bams )
+        .map { meta, bed, sample_names, bams, bais -> [ [id:'consensus_peaks'], bed, sample_names, bams, bais ] }
+    PEAKS_MULTICOV_COUNTS ( ch_peak_counts_in )
+    ch_count_tables = ch_count_tables.mix(PEAKS_MULTICOV_COUNTS.out.counts)
     ch_versions = ch_versions
         .mix(CONSENSUS_PEAKS.out.versions)
         .mix(BED_SLOP.out.versions)
+        .mix(PEAKS_MULTICOV_COUNTS.out.versions)
 
     //
     // Super-enhancers with ROSE (-g/--custom annotation -s 12500 -t 2500)
@@ -155,7 +171,19 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
             }
         ROSE ( ch_rose_in, rose_genome, rose_stitch, rose_tss )
         ch_super_enhancers = ROSE.out.super_enhancers
+        ch_super_tables = ch_super_enhancers
+            .map { meta, table -> table }
+            .collect()
+            .filter { tables -> tables.size() > 0 }
+        CONSENSUS_SUPER_ENHANCERS ( ch_super_tables )
+        ch_super_counts_in = CONSENSUS_SUPER_ENHANCERS.out.bed
+            .combine( ch_multicov_bams )
+            .map { bed, sample_names, bams, bais -> [ [id:'consensus_super_enhancers'], bed, sample_names, bams, bais ] }
+        SUPER_ENHANCERS_MULTICOV_COUNTS ( ch_super_counts_in )
+        ch_count_tables = ch_count_tables.mix(SUPER_ENHANCERS_MULTICOV_COUNTS.out.counts)
         ch_versions = ch_versions.mix(ROSE.out.versions)
+            .mix(CONSENSUS_SUPER_ENHANCERS.out.versions)
+            .mix(SUPER_ENHANCERS_MULTICOV_COUNTS.out.versions)
     }
 
     //
@@ -221,6 +249,7 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     super_enhancers= ch_super_enhancers
     nucleosomes    = ch_nucleosomes
     footprints     = ch_bindetect
+    count_tables   = ch_count_tables
     multiqc_files  = ch_multiqc_files
     versions       = ch_versions                   // channel: [ versions.yml ]
 }

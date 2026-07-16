@@ -1,0 +1,53 @@
+name: "bedtools_multicov_counts"
+description: Count reads from multiple BAM files over a BED interval set using bedtools multicov
+keywords:
+  - bed
+  - bam
+  - counts
+  - atac-seq
+  - bedtools
+tools:
+  - bedtools:
+      description: "A powerful toolset for genome arithmetic"
+      homepage: "https://bedtools.readthedocs.io"
+      documentation: "https://bedtools.readthedocs.io"
+      doi: "10.1093/bioinformatics/btq033"
+      licence: ["MIT"]
+      identifier: "biotools:bedtools"
+input:
+  - - meta:
+        type: map
+        description: Groovy Map containing count matrix information
+    - regions:
+        type: file
+        description: BED intervals to count over
+        pattern: "*.bed"
+    - sample_names:
+        type: list
+        description: Ordered sample names matching the BAM list
+    - bams:
+        type: file
+        description: Coordinate-sorted BAM files
+        pattern: "*.bam"
+    - bais:
+        type: file
+        description: BAM index files
+        pattern: "*.bai"
+output:
+  counts:
+    - - meta:
+          type: map
+          description: Groovy Map containing count matrix information
+      - "*.raw_counts.tsv":
+          type: file
+          description: Raw count matrix with one row per interval and one count column per sample
+          pattern: "*.raw_counts.tsv"
+  versions:
+    - "versions.yml":
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+authors:
+  - "@atacportray"
+maintainers:
+  - "@atacportray"
