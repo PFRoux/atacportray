@@ -149,7 +149,10 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     if ( run_rose ) {
         ch_rose_in = MACS3_CALLPEAK.out.peak.join( ch_bam_bai )
             .combine( ch_rose_annotation )
-            .map { meta, peak, bam, bai, annotation -> [ meta, peak, bam, bai, annotation ] }
+            .map { row ->
+                def annotation = row.size() > 4 ? row[4] : []
+                [ row[0], row[1], row[2], row[3], annotation ]
+            }
         ROSE ( ch_rose_in, rose_genome, rose_stitch, rose_tss )
         ch_super_enhancers = ROSE.out.super_enhancers
         ch_versions = ch_versions.mix(ROSE.out.versions)
