@@ -246,12 +246,12 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
         TOBIAS_SCOREBIGWIG ( ch_score_in )
 
         ch_bindetect_in = TOBIAS_SCOREBIGWIG.out.footprints
-            .collect()
+            .collect(flat: false)
             .map { rows ->
-                def sorted = rows.sort { a, b -> a[0].id <=> b[0].id }
+                def sorted = rows.sort { a, b -> a[0].get('id') <=> b[0].get('id') }
                 def footprints = sorted.collect { it[1] }
-                def cond_names = sorted.collect { it[0].condition ?: it[0].id }.join(' ')
-                [ [ id: 'all_samples' ], footprints, cond_names ]
+                def cond_names = sorted.collect { it[0].get('condition') ?: it[0].get('id') }.join(' ')
+                [ ['id': 'all_samples'], footprints, cond_names ]
             }
 
         TOBIAS_BINDETECT (
