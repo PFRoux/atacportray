@@ -250,7 +250,7 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
             .map { rows ->
                 def sorted = rows.sort { a, b -> a[0].get('id') <=> b[0].get('id') }
                 def footprints = sorted.collect { it[1] }
-                def cond_names = sorted.collect { it[0].get('condition') ?: it[0].get('id') }.join(' ')
+                def cond_names = sorted.collect { it[0].get('id') }.join(' ')
                 [ ['id': 'all_samples'], footprints, cond_names ]
             }
 
