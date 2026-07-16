@@ -49,56 +49,45 @@ process DEEPTOOLS_TSS_PROFILE {
         --plotTitle "ATAC signal at TSS" \\
         --perGroup
 
-    for bw in ${bigwigs}; do
-        sample=\$(basename "\$bw")
-        sample=\${sample%.bigWig}
-        sample=\${sample%.bw}
-        sample=\${sample%.coverage}
-        printf "%s\\n" "\$sample"
-    done > sample_labels.txt
-
     python - <<'PY'
-    import math
     from pathlib import Path
 
     before = int("${before}")
     after = int("${after}")
     binsize = int("${binsize}")
     nbins = int((before + after) / binsize)
-    labels = [line.strip() for line in Path("sample_labels.txt").read_text().splitlines() if line.strip()]
-    sums = [[0.0] * nbins for _ in labels]
-    counts = [[0] * nbins for _ in labels]
+    positions = [(-before + (idx * binsize) + (binsize // 2)) for idx in range(nbins)]
 
-    with open("atac_tss_matrix.tab") as handle:
+    def clean_label(label):
+        label = Path(label).name
+        for suffix in (".coverage.bigWig", ".coverage.bw", ".bigWig", ".bw", ".coverage"):
+            if label.endswith(suffix):
+                label = label[:-len(suffix)]
+                break
+        return label
+
+    data = {}
+
+    # plotProfile already writes the exact mean profile used for the PDF. Use it
+    # for MultiQC too; parsing computeMatrix rows directly is fragile because the
+    # matrix layout depends on grouping/sample options.
+    with open("atac_tss_profile.tab") as handle:
         for line in handle:
-            if not line.strip() or line.startswith("#") or line.startswith("@"):
+            if not line.strip() or line.startswith("#"):
                 continue
             fields = line.rstrip("\\n").split("\\t")
-            raw_values = fields[6:]
+            if fields[0] in ("bin labels", "bins"):
+                continue
+            if len(fields) < nbins + 2:
+                continue
+            label = clean_label(fields[0])
             values = []
-            for value in raw_values:
+            for value in fields[2:2 + nbins]:
                 try:
                     values.append(float(value))
                 except ValueError:
-                    values = []
-                    break
-            if len(values) < nbins * len(labels):
-                continue
-            for sample_index in range(len(labels)):
-                offset = sample_index * nbins
-                for bin_index, value in enumerate(values[offset:offset + nbins]):
-                    if not math.isnan(value):
-                        sums[sample_index][bin_index] += value
-                        counts[sample_index][bin_index] += 1
-
-    positions = [(-before + (idx * binsize) + (binsize // 2)) for idx in range(nbins)]
-    data = {}
-    for sample_index, label in enumerate(labels):
-        values = {}
-        for bin_index, position in enumerate(positions):
-            denom = counts[sample_index][bin_index]
-            values[str(position)] = sums[sample_index][bin_index] / denom if denom else 0.0
-        data[label] = values
+                    values.append(0.0)
+            data[label] = {str(position): values[idx] for idx, position in enumerate(positions)}
 
     import json
     with open("atac_tss_profile_mqc.json", "w") as out:

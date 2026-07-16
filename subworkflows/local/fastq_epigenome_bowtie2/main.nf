@@ -148,8 +148,9 @@ workflow FASTQ_EPIGENOME_BOWTIE2 {
     ch_super_enhancers = Channel.empty()
     if ( run_rose ) {
         ch_rose_in = MACS3_CALLPEAK.out.peak.join( ch_bam_bai )
-            .map { meta, peak, bam, bai -> [ meta, peak, bam, bai ] }
-        ROSE ( ch_rose_in, rose_genome, ch_rose_annotation, rose_stitch, rose_tss )
+            .combine( ch_rose_annotation )
+            .map { meta, peak, bam, bai, annotation -> [ meta, peak, bam, bai, annotation ] }
+        ROSE ( ch_rose_in, rose_genome, rose_stitch, rose_tss )
         ch_super_enhancers = ROSE.out.super_enhancers
         ch_versions = ch_versions.mix(ROSE.out.versions)
     }

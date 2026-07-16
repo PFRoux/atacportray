@@ -17,7 +17,8 @@ nextflow_process {
                     [ id:'test' ],
                     file("test.narrowPeak"),
                     file("test.bam"),
-                    file("test.bam.bai")
+                    file("test.bam.bai"),
+                    file("test.ucsc")
                 ]
                 input[1] = 'HG38'
                 input[2] = 12500

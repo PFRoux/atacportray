@@ -9,9 +9,8 @@ process ROSE {
     container "ghcr.io/stjude/abralab/rose:v1.3.2"
 
     input:
-    tuple val(meta), path(peaks), path(bam), path(bai)
+    tuple val(meta), path(peaks), path(bam), path(bai), path(annotation)
     val   genome_build
-    path  annotation
     val   stitch
     val   tss_exclusion
 

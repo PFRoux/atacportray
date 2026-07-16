@@ -30,13 +30,13 @@ input:
         type: file
         description: BAM index
         pattern: "*.bai"
+    - annotation:
+        type: file
+        description: Optional ROSE-compatible UCSC/refSeq-like annotation generated from the input GTF. If empty, ROSE uses its bundled genome annotation.
+        pattern: "*.ucsc"
   - genome_build:
       type: string
       description: Genome build label for ROSE fallback annotation (e.g. HG38)
-  - annotation:
-      type: file
-      description: Optional ROSE-compatible UCSC/refSeq-like annotation generated from the input GTF. If empty, ROSE uses its bundled genome annotation.
-      pattern: "*.ucsc"
   - stitch:
       type: integer
       description: Stitching distance in bp (notebook 12500)
