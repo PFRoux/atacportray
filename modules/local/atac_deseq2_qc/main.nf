@@ -3,9 +3,7 @@ process ATAC_DESEQ2_QC {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/bioconductor-deseq2:1.50.2--r45ha27e39d_0' :
-        'quay.io/biocontainers/bioconductor-deseq2:1.50.2--r45ha27e39d_0' }"
+    container 'quay.io/biocontainers/bioconductor-deseq2:1.50.2--r45ha27e39d_0'
 
     input:
     tuple val(meta), path(counts), val(sample_info)
