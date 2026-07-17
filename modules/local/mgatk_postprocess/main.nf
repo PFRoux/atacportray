@@ -79,20 +79,20 @@ process MGATK_POSTPROCESS {
 
     cat <<-END_COV_MQC > mgatk_mt_coverage_mqc.tsv
     # id: atacportray_mgatk_mt_coverage
-    # section_name: mgatk mitochondrial coverage
-    # description: Per-position mitochondrial coverage reported by mgatk.
+    # section_name: samtools mitochondrial coverage
+    # description: Per-position mitochondrial coverage computed from BAM files with samtools depth.
     # plot_type: linegraph
     # pconfig:
     #   id: atacportray_mgatk_mt_coverage
-    #   title: mgatk mitochondrial coverage
+    #   title: samtools mitochondrial coverage
     #   xlab: MT position
     #   ylab: Coverage
     END_COV_MQC
 
     cat <<-END_CIRCULAR_MQC > mgatk_mt_coverage_circular_mqc.yaml
     id: "atacportray_mgatk_mt_coverage_circular"
-    section_name: "mgatk circular mitochondrial coverage"
-    description: "Circular representation of per-position mitochondrial coverage reported by mgatk."
+    section_name: "Circular mitochondrial coverage"
+    description: "Circular representation of per-position mitochondrial coverage computed from BAM files with samtools depth."
     plot_type: "html"
     data: |
       <p>No mitochondrial coverage data available.</p>

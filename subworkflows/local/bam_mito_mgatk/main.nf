@@ -4,6 +4,7 @@
 //
 include { MGATK } from '../../../modules/local/mgatk/main'
 include { MGATK_POSTPROCESS } from '../../../modules/local/mgatk_postprocess/main'
+include { SAMTOOLS_MT_COVERAGE } from '../../../modules/local/samtools_mt_coverage/main'
 
 workflow BAM_MITO_MGATK {
 
@@ -37,10 +38,17 @@ workflow BAM_MITO_MGATK {
     )
     ch_versions = ch_versions.mix(MGATK.out.versions)
 
+    SAMTOOLS_MT_COVERAGE (
+        ch_bam.map { meta, bam, bai -> bam }.collect(),
+        ch_bam.map { meta, bam, bai -> bai }.collect(),
+        mito_contig
+    )
+    ch_versions = ch_versions.mix(SAMTOOLS_MT_COVERAGE.out.versions)
+
     if ( run_postprocess ) {
         MGATK_POSTPROCESS (
             MGATK.out.rds.collect(),
-            MGATK.out.coverage.collect(),
+            SAMTOOLS_MT_COVERAGE.out.coverage.collect(),
             min_af,
             min_vmr,
             min_sd
