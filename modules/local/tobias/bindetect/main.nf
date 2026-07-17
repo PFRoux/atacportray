@@ -31,6 +31,7 @@ process TOBIAS_BINDETECT {
     """
     mkdir -p .matplotlib
     export MPLCONFIGDIR="\${PWD}/.matplotlib"
+    export PYTHONPATH="\${PWD}:\${PYTHONPATH:-}"
 
     python - <<'PY'
     import pyBigWig
@@ -82,6 +83,30 @@ process TOBIAS_BINDETECT {
     if dropped:
         print(f"Filtered {dropped} peak regions absent from or outside one or more footprint bigWigs; kept {kept} regions for TOBIAS BINDetect.")
     PY
+
+    printf '%s\\n' \\
+        'import inspect' \\
+        '' \\
+        'try:' \\
+        '    import adjustText' \\
+        '' \\
+        '    _adjust_text = adjustText.adjust_text' \\
+        '    _params = inspect.signature(_adjust_text).parameters' \\
+        '' \\
+        '    def _compat_adjust_text(*args, **kwargs):' \\
+        '        if "add_objects" in kwargs and "add_objects" not in _params:' \\
+        '            if "objects" not in kwargs:' \\
+        '                kwargs["objects"] = kwargs.pop("add_objects")' \\
+        '            else:' \\
+        '                kwargs.pop("add_objects")' \\
+        '        if "text_from_points" in kwargs and "text_from_points" not in _params:' \\
+        '            kwargs.pop("text_from_points")' \\
+        '        return _adjust_text(*args, **kwargs)' \\
+        '' \\
+        '    adjustText.adjust_text = _compat_adjust_text' \\
+        'except Exception:' \\
+        '    pass' \\
+        > sitecustomize.py
 
     TOBIAS BINDetect \\
         --motifs $motifs \\
