@@ -66,7 +66,7 @@ process DEEPTOOLS_TSS_PROFILE {
                 break
         return label
 
-    data = {}
+    data = []
 
     # plotProfile already writes the exact mean profile used for the PDF. Use it
     # for MultiQC too; parsing computeMatrix rows directly is fragile because the
@@ -87,7 +87,7 @@ process DEEPTOOLS_TSS_PROFILE {
                     values.append(float(value))
                 except ValueError:
                     values.append(0.0)
-            data[label] = {str(position): values[idx] for idx, position in enumerate(positions)}
+            data.append((label, values))
 
     import json
     with open("atac_tss_profile_mqc.json", "w") as out:
@@ -100,9 +100,13 @@ process DEEPTOOLS_TSS_PROFILE {
                 "id": "atacportray_tss_profile",
                 "title": "ATAC signal at TSS",
                 "xlab": "Distance from TSS (bp)",
-                "ylab": "Mean coverage signal"
+                "ylab": "Mean coverage signal",
+                "xDecimals": False
             },
-            "data": data
+            "data": {
+                label: [[positions[idx], values[idx]] for idx in range(len(values))]
+                for label, values in data
+            }
         }, out)
     PY
 
@@ -133,10 +137,11 @@ process DEEPTOOLS_TSS_PROFILE {
         "id": "atacportray_tss_profile",
         "title": "ATAC signal at TSS",
         "xlab": "Distance from TSS (bp)",
-        "ylab": "Mean coverage signal"
+        "ylab": "Mean coverage signal",
+        "xDecimals": false
       },
       "data": {
-        "S1": {"-1000": 1, "0": 2, "1000": 1}
+        "S1": [[-1000, 1], [0, 2], [1000, 1]]
       }
     }
     END_MQC
